@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>$id$</id>
+		<version>$version$</version>
+		<title>$title$</title>
+		<authors>$author$</authors>
+		<owners>$author$</owners>
+		<projectUrl>http://dotnetex.codeplex.com/</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>$description$</description>
+		<copyright>Copyright Maverick Solutions 2014</copyright>
+		<tags>.NET, Reactive, Cache</tags>
+		<dependencies>
+			<dependency id="Rx-Core" version="2.2.5" />
+			<dependency id="Rx-Interfaces" version="2.2.5" />
+			<dependency id="Rx-Linq" version="2.2.5" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\$configuration$\$id$.pdb" target="lib\net45\" />
+	</files>
+</package>
