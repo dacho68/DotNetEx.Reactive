@@ -6,7 +6,7 @@
 		<title>$title$</title>
 		<authors>$author$</authors>
 		<owners>$author$</owners>
-		<projectUrl>http://dotnetex.codeplex.com/</projectUrl>
+		<projectUrl>https://github.com/zlatanov/DotNetEx.Reactive</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
 		<copyright>Copyright Maverick Solutions 2014</copyright>

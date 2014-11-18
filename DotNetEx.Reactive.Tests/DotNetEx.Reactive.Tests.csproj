@@ -63,6 +63,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Extensions\ObservableCollectionExtensionsTests.cs" />
     <Compile Include="Tests\TestCounter.cs" />
     <Compile Include="Tests\TestItem.cs" />
     <Compile Include="Extensions\ObservableExtensionsTests.cs" />

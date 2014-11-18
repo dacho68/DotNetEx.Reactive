@@ -9,12 +9,12 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public Int32 Count { get; private set; }
+		public Int32 Value { get; private set; }
 
 
 		public void Increment( Int32 value )
 		{
-			this.Count += value;
+			this.Value += value;
 		}
 	}
 }

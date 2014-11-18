@@ -8,6 +8,19 @@ namespace DotNetEx.Reactive
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
+		public Int32 Id
+		{
+			get
+			{
+				return m_id;
+			}
+			set
+			{
+				this.PropertyChanged.RaiseWhenChanged( this, ref m_id, value );
+			}
+		}
+
+
 		public String Name
 		{
 			get
@@ -44,8 +57,8 @@ namespace DotNetEx.Reactive
 		}
 
 
-
 		private String m_name;
 		private Int32 m_age;
+		private Int32 m_id;
 	}
 }

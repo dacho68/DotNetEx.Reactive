@@ -67,6 +67,7 @@
     </Compile>
     <Compile Include="Internal\Diagnostics.cs" />
     <Compile Include="Internal\ObservableCollectionListener.cs" />
+    <Compile Include="Internal\ReferenceEqualityComparer.cs" />
     <Compile Include="Internal\StringExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reactive\DerivedProperty.cs" />
