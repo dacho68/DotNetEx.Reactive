@@ -9,5 +9,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright( "Copyright © Maverick Solutions 2014" )]
 [assembly: CLSCompliant( false )]
 [assembly: ComVisible( false )]
-[assembly: AssemblyVersion( "0.3" )]					// Change this when there is a breaking change in the component
+[assembly: AssemblyVersion( "0.4" )]					// Change this when there is a breaking change in the component
 [assembly: AssemblyFileVersion( "1.2014.1030.1118" )]	// Change this whenever there is a change in anything.

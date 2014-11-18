@@ -21,7 +21,7 @@ namespace DotNetEx.Reactive
 
 			m_subscription = source.Subscribe( this.OnChange );
 
-			this.Changed = source.DistinctUntilChanged().ObserveOn( RxApp.MainScheduler );
+			this.Changed = source.DistinctUntilChanged();
 		}
 
 

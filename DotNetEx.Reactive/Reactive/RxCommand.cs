@@ -169,7 +169,7 @@ namespace DotNetEx.Reactive
 			Check.NotNull( method, "method" );
 			Check.NotNull( canExecute, "canExecute" );
 
-			canExecute = Observable.CombineLatest( new[] { this.ToObservable( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
+			canExecute = Observable.CombineLatest( new[] { this.Observe( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
 
 			return new RxCommand( x =>
 			{
@@ -196,7 +196,7 @@ namespace DotNetEx.Reactive
 			Check.NotNull( method, "method" );
 			Check.NotNull( canExecute, "canExecute" );
 
-			canExecute = Observable.CombineLatest( new[] { this.ToObservable( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
+			canExecute = Observable.CombineLatest( new[] { this.Observe( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
 
 			return new RxCommand( async x =>
 			{

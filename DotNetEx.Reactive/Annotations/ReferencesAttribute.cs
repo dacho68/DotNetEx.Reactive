@@ -1,54 +1,62 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {
 	[AttributeUsage( AttributeTargets.Property, AllowMultiple = false )]
-	public sealed class DependsOnAttribute : Attribute
+	public sealed class ReferencesAttribute : Attribute
 	{
-		public static IReadOnlyDictionary<String, HashSet<String>> GetDependencies( Type targetType )
+		internal static IEnumerable<String> Get( Type targetType, String propertyName )
 		{
 			Check.NotNull( targetType, "targetType" );
+			Check.NotNull( propertyName, "propertyName" );
 
-			Dictionary<String, HashSet<String>> result;
+			Dictionary<String, HashSet<String>> map;
+			HashSet<String> references;
 
-			if ( !s_types.TryGetValue( targetType, out result ) )
+			if ( !s_types.TryGetValue( targetType, out map ) )
 			{
-				result = new Dictionary<String, HashSet<String>>();
+				map = new Dictionary<String, HashSet<String>>();
 
 				foreach ( var property in targetType.GetProperties( BindingFlags.Public | BindingFlags.Instance ) )
 				{
-					var attribute = property.GetCustomAttribute<DependsOnAttribute>();
+					var attribute = property.GetCustomAttribute<ReferencesAttribute>();
 
 					if ( attribute != null )
 					{
-						foreach ( var propertyName in attribute.PropertyNames )
+						foreach ( var name in attribute.PropertyNames )
 						{
 							HashSet<String> dependencies = null;
 
-							if ( !result.TryGetValue( propertyName, out dependencies ) )
+							if ( !map.TryGetValue( name, out dependencies ) )
 							{
 								dependencies = new HashSet<String>();
 
-								result.Add( propertyName, dependencies );
+								map.Add( name, dependencies );
 							}
 
-							dependencies.Add( property.Name );	
+							dependencies.Add( property.Name );
 						}
 					}
 				}
 
-				s_types[ targetType ] = result;
+				s_types[ targetType ] = map;
 			}
 
-			return result;
+			if ( map.TryGetValue( propertyName, out references ) )
+			{
+				return references;
+			}
+
+			return Enumerable.Empty<String>();
 		}
 
 
-		public DependsOnAttribute( params String[] propertyNames )
+		public ReferencesAttribute( params String[] propertyNames )
 		{
 			this.PropertyNames = propertyNames;
 		}

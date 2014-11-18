@@ -1,11 +1,13 @@
 ﻿using System;
+using System.ComponentModel;
 using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {
-	public sealed class RxPropertyChange<T>
+	public struct RxPropertyChange<T> where T : INotifyPropertyChanged
 	{
-		internal RxPropertyChange( T source, String propertyName )
+		internal RxPropertyChange( T source, String propertyName ) :
+			this()
 		{
 			Check.NotNull( propertyName, "propertyName" );
 
