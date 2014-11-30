@@ -22,7 +22,7 @@ namespace DotNetEx.Reactive
 			{
 				map = new Dictionary<String, HashSet<String>>();
 
-				foreach ( var property in targetType.GetProperties( BindingFlags.Public | BindingFlags.Instance ) )
+				foreach ( var property in targetType.GetProperties( BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic ) )
 				{
 					var attribute = property.GetCustomAttribute<ReferencesAttribute>();
 

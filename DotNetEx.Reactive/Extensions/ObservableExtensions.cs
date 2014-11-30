@@ -10,20 +10,20 @@ namespace DotNetEx.Reactive
 {
 	public static class ObservableExtensions
 	{
-		public static DerivedProperty<T> ToProperty<T>( this IObservable<T> source )
+		public static RxProperty<T> ToProperty<T>( this IObservable<T> source )
 		{
 			if ( source == null )
 			{
 				return null;
 			}
 
-			return new DerivedProperty<T>( source );
+			return new RxProperty<T>( source );
 		}
 
 
-		public static DerivedProperty<T> ToProperty<T>( this IObservable<T> source, T initialValue )
+		public static RxProperty<T> ToProperty<T>( this IObservable<T> source, T initialValue )
 		{
-			return new DerivedProperty<T>( source ?? Observable.Empty<T>(), initialValue );
+			return new RxProperty<T>( source ?? Observable.Empty<T>(), initialValue );
 		}
 
 
@@ -67,7 +67,7 @@ namespace DotNetEx.Reactive
 			return changes.Select( x => new RxPropertyChange<T>( source, x.EventArgs.PropertyName ) );
 		}
 
-
+		
 		public static Boolean RaiseWhenChanged<TSource, TValue>( this PropertyChangedEventHandler handler, TSource source, ref TValue oldValue, TValue newValue, [CallerMemberName] String propertyName = null )
 			where TSource : INotifyPropertyChanged
 		{
@@ -90,7 +90,7 @@ namespace DotNetEx.Reactive
 			{
 				handler( source, new PropertyChangedEventArgs( propertyName ) );
 
-				foreach ( var reference in ReferencesAttribute.Get( typeof( TSource ), propertyName ) )
+				foreach ( var reference in ReferencesAttribute.Get( source.GetType(), propertyName ) )
 				{
 					handler.Raise( source, reference );
 				}

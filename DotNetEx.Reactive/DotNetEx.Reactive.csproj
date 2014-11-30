@@ -70,7 +70,8 @@
     <Compile Include="Internal\ReferenceEqualityComparer.cs" />
     <Compile Include="Internal\StringExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Reactive\DerivedProperty.cs" />
+    <Compile Include="Reactive\ObservableHashSet.cs" />
+    <Compile Include="Reactive\RxProperty.cs" />
     <Compile Include="Reactive\RxCommandContext.cs" />
     <Compile Include="Reactive\RxCommandSource.cs" />
     <Compile Include="Reactive\RxApp.cs" />

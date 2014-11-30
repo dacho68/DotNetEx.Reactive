@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -118,6 +119,52 @@ namespace DotNetEx.Reactive
 			}
 
 			eventDelegate.DynamicInvoke( collection, new NotifyCollectionChangedEventArgs( NotifyCollectionChangedAction.Reset ) );
+		}
+
+
+		public static IDisposable Merge<T>( this ObservableCollection<T> target, IObservable<T> add, IObservable<T> remove )
+		{
+			Check.NotNull( target, "target" );
+			Check.NotNull( add, "add" );
+			Check.NotNull( remove, "remove" );
+
+			Dictionary<T, Int32> values = new Dictionary<T, Int32>();
+			target.Clear();
+
+			IDisposable addSubscription = add.Subscribe( x =>
+			{
+				lock ( values )
+				{
+					if ( values.ContainsKey( x ) )
+					{
+						++values[ x ];
+					}
+					else
+					{
+						values.Add( x, 1 );
+						target.Add( x );
+					}
+				}
+			} );
+
+			IDisposable removeSubscription = remove.Subscribe( x =>
+			{
+				lock ( values )
+				{
+					if ( values.ContainsKey( x ) && --values[ x ] == 0 )
+					{
+						values.Remove( x );
+						target.Remove( x );
+					}
+				}
+			} );
+
+			return Disposable.Create( () =>
+			{
+				addSubscription.Dispose();
+				removeSubscription.Dispose();
+				target.Clear();
+			} );
 		}
 
 

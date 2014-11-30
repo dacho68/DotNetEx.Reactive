@@ -1,19 +1,18 @@
 ﻿using System;
-using System.ComponentModel;
-using DotNetEx.Reactive.Internal;
 using System.Reactive.Linq;
+using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {
-	public sealed class DerivedProperty<T> : IDisposable
+	public sealed class RxProperty<T> : IDisposable
 	{
-		public DerivedProperty( IObservable<T> source ) :
+		public RxProperty( IObservable<T> source ) :
 			this( source, default( T ) )
 		{
 		}
 
 
-		public DerivedProperty( IObservable<T> source, T initialValue )
+		public RxProperty( IObservable<T> source, T initialValue )
 		{
 			Check.NotNull( source, "source" );
 
@@ -57,7 +56,7 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public static implicit operator T( DerivedProperty<T> property )
+		public static implicit operator T( RxProperty<T> property )
 		{
 			if ( property == null )
 			{
