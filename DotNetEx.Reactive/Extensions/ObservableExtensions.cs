@@ -71,7 +71,7 @@ namespace DotNetEx.Reactive
 		public static Boolean RaiseWhenChanged<TSource, TValue>( this PropertyChangedEventHandler handler, TSource source, ref TValue oldValue, TValue newValue, [CallerMemberName] String propertyName = null )
 			where TSource : INotifyPropertyChanged
 		{
-			if ( !Object.Equals( oldValue, newValue ) )
+			if ( !EqualityComparer<TValue>.Default.Equals( oldValue, newValue ) )
 			{
 				oldValue = newValue;
 				handler.Raise( source, propertyName );
