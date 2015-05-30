@@ -285,10 +285,10 @@ namespace DotNetEx.Reactive
 		{
 			RxCommand command;
 			
-			m_commands.TryGetValue( binder.Name, out command );
+			Boolean success = m_commands.TryGetValue( binder.Name, out command );
 			result = command;
 
-			return true;
+			return success;
 		}
 
 

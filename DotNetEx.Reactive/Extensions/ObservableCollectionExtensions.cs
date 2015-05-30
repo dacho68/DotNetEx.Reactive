@@ -83,7 +83,7 @@ namespace DotNetEx.Reactive
 				field.SetValue( collection, eventDelegate );
 			}
 
-			if ( addedValues.Count > 0 )
+			if ( addedValues.Count > 0 && eventDelegate != null )
 			{
 				eventDelegate.DynamicInvoke( collection, new NotifyCollectionChangedEventArgs( NotifyCollectionChangedAction.Add, addedValues ) );
 			}
@@ -118,7 +118,10 @@ namespace DotNetEx.Reactive
 				field.SetValue( collection, eventDelegate );
 			}
 
-			eventDelegate.DynamicInvoke( collection, new NotifyCollectionChangedEventArgs( NotifyCollectionChangedAction.Reset ) );
+			if ( eventDelegate != null )
+			{
+				eventDelegate.DynamicInvoke( collection, new NotifyCollectionChangedEventArgs( NotifyCollectionChangedAction.Reset ) );
+			}
 		}
 
 
