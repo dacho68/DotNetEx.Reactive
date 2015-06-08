@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reactive.Linq;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {

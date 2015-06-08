@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {
-	public static class ObservableCollectionExtensions
+	public static class ObservableExtensions
 	{
 		public static IObservable<RxPropertyChange<T>> ObserveItems<T>( this ObservableCollection<T> collection )
 			where T : class, INotifyPropertyChanged
@@ -43,8 +43,7 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public static IObservable<NotifyCollectionChangedEventArgs> ObserveCollection<TCollection>( this TCollection collection )
-			where TCollection : class, INotifyCollectionChanged
+		public static IObservable<NotifyCollectionChangedEventArgs> ObserveCollection<T>( this ObservableCollection<T> collection )
 		{
 			Check.NotNull( collection, "collection" );
 
@@ -168,6 +167,113 @@ namespace DotNetEx.Reactive
 				removeSubscription.Dispose();
 				target.Clear();
 			} );
+		}
+
+
+		public static RxProperty<T> ToProperty<T>( this IObservable<T> source )
+		{
+			if ( source == null )
+			{
+				return null;
+			}
+
+			return new RxProperty<T>( source );
+		}
+
+
+		public static RxProperty<T> ToProperty<T>( this IObservable<T> source, T initialValue )
+		{
+			return new RxProperty<T>( source ?? Observable.Empty<T>(), initialValue );
+		}
+
+
+		/// <summary>
+		/// An observable which provides values when any of the source properties used in the provided expression has changed.
+		/// </summary>
+		public static IObservable<TValue> Observe<T, TValue>( this T source, Expression<Func<T, TValue>> expression ) 
+			where T : INotifyPropertyChanged
+		{
+			Check.NotNull( expression, "expression" );
+
+			MemberExpressionVisitor<T> visitor = new MemberExpressionVisitor<T>();
+			expression = (Expression<Func<T, TValue>>)visitor.Visit( expression );
+
+			HashSet<String> members = visitor.Members;
+			Func<T, TValue> selector = expression.Compile();
+			IObservable<PropertyChangedEventArgs> changes;
+
+			if ( source is ObservableObject )
+			{
+				changes = ( (ObservableObject)(Object)source ).PropertyChanges;
+			}
+			else
+			{
+				changes = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>( x => source.PropertyChanged += x, x => source.PropertyChanged -= x ).Select( x => x.EventArgs );
+			}
+
+			if ( members.Count > 0 )
+			{
+				return changes
+					.Where( x => members.Contains( x.PropertyName ) )
+					.Select( x => selector( source ) )
+					.Publish( selector( source ) )
+					.RefCount()
+					.DistinctUntilChanged();
+			}
+
+			return changes
+				.Select( x => selector( source ) )
+				.Publish( selector( source ) )
+				.RefCount()
+				.DistinctUntilChanged();
+		}
+
+
+		public static IObservable<RxPropertyChange<T>> Observe<T>( this T source ) 
+			where T : INotifyPropertyChanged
+		{
+			IObservable<PropertyChangedEventArgs> changes;
+
+			if ( source is ObservableObject )
+			{
+				changes = ( (ObservableObject)(Object)source ).PropertyChanges;
+			}
+			else
+			{
+				changes = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>( x => source.PropertyChanged += x, x => source.PropertyChanged -= x ).Select( x => x.EventArgs );
+			}
+
+			return changes.Select( x => new RxPropertyChange<T>( source, x.PropertyName ) );
+		}
+
+		
+		public static Boolean RaiseWhenChanged<TSource, TValue>( this PropertyChangedEventHandler handler, TSource source, ref TValue oldValue, TValue newValue, [CallerMemberName] String propertyName = null )
+			where TSource : INotifyPropertyChanged
+		{
+			if ( !EqualityComparer<TValue>.Default.Equals( oldValue, newValue ) )
+			{
+				oldValue = newValue;
+				handler.Raise( source, propertyName );
+
+				return true;
+			}
+
+			return false;
+		}
+
+
+		public static void Raise<TSource>( this PropertyChangedEventHandler handler, TSource source, [CallerMemberName] String propertyName = null )
+			where TSource : INotifyPropertyChanged
+		{
+			if ( handler != null )
+			{
+				handler( source, new PropertyChangedEventArgs( propertyName ) );
+
+				foreach ( var reference in ReferencesAttribute.Get( source.GetType(), propertyName ) )
+				{
+					handler.Raise( source, reference );
+				}
+			}
 		}
 
 

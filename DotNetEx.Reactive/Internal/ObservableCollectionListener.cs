@@ -9,7 +9,6 @@ namespace DotNetEx.Reactive
 {
 	internal sealed class ObservableCollectionListener<TCollection, TItem> 
 		where TCollection : INotifyCollectionChanged, IEnumerable<TItem>
-		where TItem : class, INotifyPropertyChanged
 	{
 		public ObservableCollectionListener( TCollection collection )
 		{
@@ -68,7 +67,7 @@ namespace DotNetEx.Reactive
 				{
 					if ( m_subscribed.Add( item ) )
 					{
-						item.PropertyChanged += this.OnItemPropertyChanged;
+						( (INotifyPropertyChanged)item ).PropertyChanged += this.OnItemPropertyChanged;
 					}
 				}
 			}
@@ -83,7 +82,7 @@ namespace DotNetEx.Reactive
 				{
 					if ( m_subscribed.Remove( item ) )
 					{
-						item.PropertyChanged -= this.OnItemPropertyChanged;
+						( (INotifyPropertyChanged)item ).PropertyChanged -= this.OnItemPropertyChanged;
 					}
 				}
 			}

@@ -6,7 +6,6 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {

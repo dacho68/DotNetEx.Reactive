@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.IO;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {

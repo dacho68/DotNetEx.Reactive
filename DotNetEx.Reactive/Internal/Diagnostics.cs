@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DotNetEx.Reactive.Internal
+namespace DotNetEx.Reactive
 {
 	internal static class Check
 	{

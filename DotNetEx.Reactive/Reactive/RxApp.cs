@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Reactive.Disposables;
 using System.Reactive.Subjects;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
-using DotNetEx.Reactive.Internal;
 
 namespace DotNetEx.Reactive
 {
-	public struct RxPropertyChange<T> where T : INotifyPropertyChanged
+	public struct RxPropertyChange<T>
 	{
 		internal RxPropertyChange( T source, String propertyName ) :
 			this()

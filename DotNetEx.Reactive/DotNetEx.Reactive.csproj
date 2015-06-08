@@ -7,7 +7,7 @@
     <ProjectGuid>{5178217A-2470-4529-A4D4-06D8EAA096C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DotNetEx.Reactive</RootNamespace>
+    <RootNamespace>DotNetEx</RootNamespace>
     <AssemblyName>DotNetEx.Reactive</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -55,22 +55,28 @@
   <ItemGroup>
     <Compile Include="Annotations\OnPropertyChangingAttribute.cs" />
     <Compile Include="Annotations\OnPropertyChangedAttribute.cs" />
-    <Compile Include="Annotations\ReferencesAttribute.cs" />
+    <Compile Include="Reactive\IObservableDictionaryKey.cs" />
+    <Compile Include="Reactive\IObservableDictionary.cs" />
+    <Compile Include="Reactive\IObservableList.cs" />
+    <Compile Include="Reactive\IObservableObject.cs" />
+    <Compile Include="Reactive\ObservableDictionaryKey.cs" />
+    <Compile Include="Reactive\ReferencesAttribute.cs" />
     <Compile Include="Cache\AppCache.cs" />
     <Compile Include="Cache\AppCacheItem.cs" />
     <Compile Include="Cache\AppCacheSettings.cs" />
     <Compile Include="Cache\AppDiskCache.cs" />
     <Compile Include="Cache\IAppCache.cs" />
-    <Compile Include="Extensions\ObservableCollectionExtensions.cs" />
-    <Compile Include="Extensions\ObservableExtensions.cs">
+    <Compile Include="Reactive\ObservableExtensions.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Internal\Diagnostics.cs" />
     <Compile Include="Internal\ObservableCollectionListener.cs" />
     <Compile Include="Internal\ReferenceEqualityComparer.cs" />
     <Compile Include="Internal\StringExtensions.cs" />
+    <Compile Include="Reactive\ObservableDictionary.cs" />
+    <Compile Include="Reactive\ObservableList.cs" />
+    <Compile Include="Reactive\ObservableObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Reactive\ObservableHashSet.cs" />
     <Compile Include="Reactive\RxProperty.cs" />
     <Compile Include="Reactive\RxCommandContext.cs" />
     <Compile Include="Reactive\RxCommandSource.cs" />
