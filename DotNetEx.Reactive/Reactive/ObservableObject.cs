@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace DotNetEx.Reactive
 {
+	[Serializable]
 	public abstract class ObservableObject : IObservableObject
 	{
 		protected ObservableObject()
@@ -15,6 +16,7 @@ namespace DotNetEx.Reactive
 		}
 
 
+		[field:NonSerialized]
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -113,8 +115,11 @@ namespace DotNetEx.Reactive
 					this.Attach( (IChangeTracking)newValue );
 				}
 
+				this.OnPropertyChanging( propertyName );
+
 				value = newValue;
-				
+
+				this.OnPropertyChanged( propertyName );
 				this.RaisePropertyChanged( propertyName );
 				this.IsChanged = true;
 
@@ -122,6 +127,16 @@ namespace DotNetEx.Reactive
 			}
 
 			return false;
+		}
+
+
+		protected virtual void OnPropertyChanging( String propertyName )
+		{
+		}
+
+
+		protected virtual void OnPropertyChanged( String propertyName )
+		{
 		}
 
 
@@ -163,7 +178,8 @@ namespace DotNetEx.Reactive
 		}
 
 
-		private Boolean m_isChanged = false;
+		[NonSerialized]
 		private Subject<PropertyChangedEventArgs> m_propertyChanges;
+		private Boolean m_isChanged = false;
 	}
 }
