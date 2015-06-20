@@ -4,13 +4,13 @@
 		<id>$id$</id>
 		<version>$version$</version>
 		<title>$title$</title>
-		<authors>$author$</authors>
-		<owners>$author$</owners>
-		<projectUrl>https://github.com/zlatanov/DotNetEx.Reactive</projectUrl>
+		<authors>Ivan Zlatanov</authors>
+		<owners>Ivan Zlatanov</owners>
+		<projectUrl>https://github.com/zlatanov/dotnetex.reactive</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
-		<copyright>Copyright Maverick Solutions 2014</copyright>
-		<tags>.NET, Reactive, Cache</tags>
+		<copyright>Copyright Ivan Zlatanov</copyright>
+		<tags>.NET, Reactive</tags>
 		<dependencies>
 			<dependency id="Rx-Core" version="2.2.5" />
 			<dependency id="Rx-Interfaces" version="2.2.5" />
@@ -18,6 +18,6 @@
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="bin\$configuration$\$id$.pdb" target="lib\net45\" />
+		<file src="bin\$configuration$\$id$.pdb" target="lib\net451\" />
 	</files>
 </package>

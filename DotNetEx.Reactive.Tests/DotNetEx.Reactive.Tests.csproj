@@ -49,6 +49,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Rx-Linq.2.2.5\lib\net45\System.Reactive.Linq.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.XML" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -63,9 +65,11 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Assets\TestObservableObject.cs" />
     <Compile Include="Extensions\ObservableCollectionExtensionsTests.cs" />
-    <Compile Include="Tests\TestCounter.cs" />
-    <Compile Include="Tests\TestItem.cs" />
+    <Compile Include="Reactive\ObservableObjectTests.cs" />
+    <Compile Include="Assets\TestCounter.cs" />
+    <Compile Include="Assets\TestItem.cs" />
     <Compile Include="Extensions\ObservableExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reactive.Subjects;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 
 namespace DotNetEx.Reactive
 {
@@ -51,6 +52,15 @@ namespace DotNetEx.Reactive
 		}
 
 
+		public Boolean IsInitializing
+		{
+			get
+			{
+				return m_init > 0;
+			}
+		}
+
+
 		public virtual void AcceptChanges()
 		{
 			if ( this.IsChanged )
@@ -58,19 +68,55 @@ namespace DotNetEx.Reactive
 				this.IsChanged = false;
 
 				// Propagate the accept changes to nested contained items
-				var fields = this.GetType()
-					.GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public )
-					.Where( x => typeof( IChangeTracking ).IsAssignableFrom( x.FieldType ) );
+				FieldInfo[] trackableFields;
 
-				foreach ( var field in fields )
+				lock ( s_trackableFields )
+				{
+					Type thisType = this.GetType();
+
+					if ( !s_trackableFields.TryGetValue( thisType, out trackableFields ) )
+					{
+						trackableFields = thisType
+							.GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public )
+							.Where( x => typeof( IChangeTracking ).IsAssignableFrom( x.FieldType ) )
+							.ToArray();
+
+						s_trackableFields.Add( thisType, trackableFields );
+					}
+				}
+				
+				foreach ( var field in trackableFields )
 				{
 					IChangeTracking value = (IChangeTracking)field.GetValue( this );
 
-					if ( value != null )
+					if ( value != null && value.IsChanged )
 					{
 						value.AcceptChanges();
 					}
 				}
+			}
+		}
+
+
+		public void BeginInit()
+		{
+			if ( ++m_init == 1 )
+			{
+				this.RaisePropertyChanged( "IsInitializing" );
+			}
+		}
+
+
+		public void EndInit()
+		{
+			if ( m_init == 0 )
+			{
+				throw new InvalidOperationException( "BeginInit must be callled before EndInit." );
+			}
+
+			if ( --m_init == 0 )
+			{
+				this.RaisePropertyChanged( "IsInitializing" );
 			}
 		}
 
@@ -121,7 +167,11 @@ namespace DotNetEx.Reactive
 
 				this.OnPropertyChanged( propertyName );
 				this.RaisePropertyChanged( propertyName );
-				this.IsChanged = true;
+
+				if ( !this.IsInitializing )
+				{
+					this.IsChanged = true;
+				}
 
 				return true;
 			}
@@ -168,7 +218,7 @@ namespace DotNetEx.Reactive
 
 		private void OnItemPropertyChanged( Object sender, PropertyChangedEventArgs e )
 		{
-			if ( !this.IsChanged )
+			if ( !this.IsChanged && !this.IsInitializing )
 			{
 				if ( e.PropertyName == "IsChanged" )
 				{
@@ -178,8 +228,27 @@ namespace DotNetEx.Reactive
 		}
 
 
+		[OnDeserializing]
+		private void OnDeserializing( StreamingContext context )
+		{
+			this.BeginInit();
+		}
+
+
+		[OnDeserialized]
+		private void OnDeserialized( StreamingContext context )
+		{
+			this.EndInit();
+		}
+
+
 		[NonSerialized]
 		private Subject<PropertyChangedEventArgs> m_propertyChanges;
+		[NonSerialized]
+		private Int32 m_init = 0; 
 		private Boolean m_isChanged = false;
+
+
+		private static readonly Dictionary<Type, FieldInfo[]> s_trackableFields = new Dictionary<Type, FieldInfo[]>();
 	}
 }
