@@ -10,6 +10,16 @@ namespace DotNetEx.Reactive.Assets
 	[DataContract]
 	public sealed class TestObservableObject : ObservableObject
 	{
+		public TestObservableObject()
+		{
+			this.BeginInit();
+
+			this.Children = new ObservableList<TestObservableObject>();
+
+			this.EndInit();
+		}
+
+
 		[DataMember]
 		public String Name
 		{
@@ -38,7 +48,37 @@ namespace DotNetEx.Reactive.Assets
 		}
 
 
+		[DataMember]
+		public TestObservableObject Child
+		{
+			get
+			{
+				return m_child;
+			}
+			set
+			{
+				this.SetValue( ref m_child, value );
+			}
+		}
+
+
+		[DataMember]
+		public ObservableList<TestObservableObject> Children
+		{
+			get
+			{
+				return m_children;
+			}
+			private set
+			{
+				this.SetValue( ref m_children, value );
+			}
+		}
+
+
 		private String m_name;
 		private String m_nickname;
+		private TestObservableObject m_child;
+		private ObservableList<TestObservableObject> m_children;
 	}
 }

@@ -67,7 +67,7 @@ namespace DotNetEx.Reactive
 			{
 				this.IsChanged = false;
 
-				// Propagate the accept changes to nested contained items
+				// Propagate the accept changes to nested items
 				FieldInfo[] trackableFields;
 
 				lock ( s_trackableFields )
@@ -102,7 +102,21 @@ namespace DotNetEx.Reactive
 		{
 			if ( ++m_init == 1 )
 			{
+				this.OnBeginInit();
 				this.RaisePropertyChanged( "IsInitializing" );
+
+				// Propagate the begin init to nested items
+				FieldInfo[] initializableFields = GetInitializableFields();
+
+				foreach ( var field in initializableFields )
+				{
+					ISupportInitialize value = (ISupportInitialize)field.GetValue( this );
+
+					if ( value != null )
+					{
+						value.BeginInit();
+					}
+				}
 			}
 		}
 
@@ -116,36 +130,20 @@ namespace DotNetEx.Reactive
 
 			if ( --m_init == 0 )
 			{
+				this.OnEndInit();
 				this.RaisePropertyChanged( "IsInitializing" );
-			}
-		}
 
+				// Propagate the begin init to nested items
+				FieldInfo[] initializableFields = GetInitializableFields();
 
-		protected void Attach<T>( T item )
-			where T : IChangeTracking
-		{
-			if ( item != null )
-			{
-				var notifiable = item as INotifyPropertyChanged;
-
-				if ( notifiable != null )
+				foreach ( var field in initializableFields )
 				{
-					notifiable.PropertyChanged += OnItemPropertyChanged;
-				}
-			}
-		}
+					ISupportInitialize value = (ISupportInitialize)field.GetValue( this );
 
-
-		protected void Detach<T>( T item )
-			where T : IChangeTracking
-		{
-			if ( item != null )
-			{
-				var notifiable = item as INotifyPropertyChanged;
-
-				if ( notifiable != null )
-				{
-					notifiable.PropertyChanged -= OnItemPropertyChanged;
+					if ( value != null )
+					{
+						value.EndInit();
+					}
 				}
 			}
 		}
@@ -186,6 +184,16 @@ namespace DotNetEx.Reactive
 
 
 		protected virtual void OnPropertyChanged( String propertyName )
+		{
+		}
+
+
+		protected virtual void OnBeginInit()
+		{
+		}
+
+
+		protected virtual void OnEndInit()
 		{
 		}
 
@@ -242,6 +250,69 @@ namespace DotNetEx.Reactive
 		}
 
 
+		private void Attach<T>( T item )
+			where T : IChangeTracking
+		{
+			if ( item != null )
+			{
+				if ( this.IsInitializing )
+				{
+					var initializable = item as ISupportInitialize;
+
+					if ( initializable != null )
+					{
+						initializable.BeginInit();
+					}
+				}
+
+				var notifiable = item as INotifyPropertyChanged;
+
+				if ( notifiable != null )
+				{
+					notifiable.PropertyChanged += OnItemPropertyChanged;
+				}
+			}
+		}
+
+
+		private void Detach<T>( T item )
+			where T : IChangeTracking
+		{
+			if ( item != null )
+			{
+				var notifiable = item as INotifyPropertyChanged;
+
+				if ( notifiable != null )
+				{
+					notifiable.PropertyChanged -= OnItemPropertyChanged;
+				}
+			}
+		}
+
+
+		private FieldInfo[] GetInitializableFields()
+		{
+			FieldInfo[] initializableFields;
+
+			lock ( s_initializableFields )
+			{
+				Type thisType = this.GetType();
+
+				if ( !s_initializableFields.TryGetValue( thisType, out initializableFields ) )
+				{
+					initializableFields = thisType
+						.GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public )
+						.Where( x => typeof( ISupportInitialize ).IsAssignableFrom( x.FieldType ) )
+						.ToArray();
+
+					s_initializableFields.Add( thisType, initializableFields );
+				}
+			}
+
+			return initializableFields;
+		}
+
+
 		[NonSerialized]
 		private Subject<PropertyChangedEventArgs> m_propertyChanges;
 		[NonSerialized]
@@ -250,5 +321,6 @@ namespace DotNetEx.Reactive
 
 
 		private static readonly Dictionary<Type, FieldInfo[]> s_trackableFields = new Dictionary<Type, FieldInfo[]>();
+		private static readonly Dictionary<Type, FieldInfo[]> s_initializableFields = new Dictionary<Type, FieldInfo[]>();
 	}
 }

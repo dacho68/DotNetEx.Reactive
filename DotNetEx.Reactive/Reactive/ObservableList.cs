@@ -246,6 +246,40 @@ namespace DotNetEx.Reactive
 		}
 
 
+		protected override void OnBeginInit()
+		{
+			if ( s_childrenSupportInitialize )
+			{
+				foreach ( ISupportInitialize item in m_items )
+				{
+					if ( item != null )
+					{
+						item.BeginInit();
+					}
+				}
+			}
+			
+			base.OnBeginInit();
+		}
+
+
+		protected override void OnEndInit()
+		{
+			if ( s_childrenSupportInitialize )
+			{
+				foreach ( ISupportInitialize item in m_items )
+				{
+					if ( item != null )
+					{
+						item.EndInit();
+					}
+				}
+			}
+			
+			base.OnEndInit();
+		}
+
+
 		private void SetupItem( T item, Boolean remove, Boolean constructor = false )
 		{
 			if ( s_childrenSupportNotifyPropertyChanged )
@@ -262,6 +296,16 @@ namespace DotNetEx.Reactive
 					{
 						observable.PropertyChanged += this.OnItemPropertyChanged;
 					}
+				}
+			}
+
+			if ( this.IsInitializing && s_childrenSupportInitialize )
+			{
+				ISupportInitialize initializable = (ISupportInitialize)item;
+
+				if ( initializable != null )
+				{
+					initializable.BeginInit();
 				}
 			}
 
@@ -483,5 +527,6 @@ namespace DotNetEx.Reactive
 
 		private static readonly Boolean s_childrenSupportNotifyPropertyChanged = typeof( INotifyPropertyChanged ).IsAssignableFrom( typeof( T ) );
 		private static readonly Boolean s_childrenSupportChangeTracking = typeof( IChangeTracking ).IsAssignableFrom( typeof( T ) );
+		private static readonly Boolean s_childrenSupportInitialize = typeof( ISupportInitialize ).IsAssignableFrom( typeof( T ) );
 	}
 }
