@@ -17,7 +17,7 @@ namespace DotNetEx.Reactive
 		}
 
 
-		[field:NonSerialized]
+		[field: NonSerialized]
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -68,28 +68,9 @@ namespace DotNetEx.Reactive
 				this.IsChanged = false;
 
 				// Propagate the accept changes to nested items
-				FieldInfo[] trackableFields;
-
-				lock ( s_trackableFields )
+				if ( m_trackable != null && m_trackable.Count > 0 )
 				{
-					Type thisType = this.GetType();
-
-					if ( !s_trackableFields.TryGetValue( thisType, out trackableFields ) )
-					{
-						trackableFields = thisType
-							.GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public )
-							.Where( x => typeof( IChangeTracking ).IsAssignableFrom( x.FieldType ) )
-							.ToArray();
-
-						s_trackableFields.Add( thisType, trackableFields );
-					}
-				}
-				
-				foreach ( var field in trackableFields )
-				{
-					IChangeTracking value = (IChangeTracking)field.GetValue( this );
-
-					if ( value != null && value.IsChanged )
+					foreach ( var value in m_trackable.Where( x => x.IsChanged ) )
 					{
 						value.AcceptChanges();
 					}
@@ -106,13 +87,9 @@ namespace DotNetEx.Reactive
 				this.RaisePropertyChanged( "IsInitializing" );
 
 				// Propagate the begin init to nested items
-				FieldInfo[] initializableFields = GetInitializableFields();
-
-				foreach ( var field in initializableFields )
+				if ( m_initializable != null && m_initializable.Count > 0 )
 				{
-					ISupportInitialize value = (ISupportInitialize)field.GetValue( this );
-
-					if ( value != null )
+					foreach ( var value in m_initializable )
 					{
 						value.BeginInit();
 					}
@@ -134,13 +111,9 @@ namespace DotNetEx.Reactive
 				this.RaisePropertyChanged( "IsInitializing" );
 
 				// Propagate the begin init to nested items
-				FieldInfo[] initializableFields = GetInitializableFields();
-
-				foreach ( var field in initializableFields )
+				if ( m_initializable != null && m_initializable.Count > 0 )
 				{
-					ISupportInitialize value = (ISupportInitialize)field.GetValue( this );
-
-					if ( value != null )
+					foreach ( var value in m_initializable )
 					{
 						value.EndInit();
 					}
@@ -255,15 +228,29 @@ namespace DotNetEx.Reactive
 		{
 			if ( item != null )
 			{
-				if ( this.IsInitializing )
-				{
-					var initializable = item as ISupportInitialize;
+				var initializable = item as ISupportInitialize;
 
-					if ( initializable != null )
+				if ( initializable != null )
+				{
+					if ( m_initializable == null )
+					{
+						m_initializable = new HashSet<ISupportInitialize>( ReferenceEqualityComparer<ISupportInitialize>.Instance );
+					}
+
+					m_initializable.Add( initializable );
+
+					if ( this.IsInitializing )
 					{
 						initializable.BeginInit();
 					}
 				}
+
+				if ( m_trackable == null )
+				{
+					m_trackable = new HashSet<IChangeTracking>( ReferenceEqualityComparer<IChangeTracking>.Instance );
+				}
+
+				m_trackable.Add( item );
 
 				var notifiable = item as INotifyPropertyChanged;
 
@@ -286,41 +273,36 @@ namespace DotNetEx.Reactive
 				{
 					notifiable.PropertyChanged -= OnItemPropertyChanged;
 				}
-			}
-		}
 
+				m_trackable.Remove( item );
 
-		private FieldInfo[] GetInitializableFields()
-		{
-			FieldInfo[] initializableFields;
+				var initializable = item as ISupportInitialize;
 
-			lock ( s_initializableFields )
-			{
-				Type thisType = this.GetType();
-
-				if ( !s_initializableFields.TryGetValue( thisType, out initializableFields ) )
+				if ( initializable != null )
 				{
-					initializableFields = thisType
-						.GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public )
-						.Where( x => typeof( ISupportInitialize ).IsAssignableFrom( x.FieldType ) )
-						.ToArray();
+					m_initializable.Remove( initializable );
 
-					s_initializableFields.Add( thisType, initializableFields );
+					if ( this.IsInitializing )
+					{
+						initializable.EndInit();
+					}
 				}
 			}
-
-			return initializableFields;
 		}
 
+
+		private Boolean m_isChanged = false;
 
 		[NonSerialized]
 		private Subject<PropertyChangedEventArgs> m_propertyChanges;
+		
 		[NonSerialized]
-		private Int32 m_init = 0; 
-		private Boolean m_isChanged = false;
+		private Int32 m_init = 0;
+		
+		[NonSerialized]
+		private HashSet<IChangeTracking> m_trackable;
 
-
-		private static readonly Dictionary<Type, FieldInfo[]> s_trackableFields = new Dictionary<Type, FieldInfo[]>();
-		private static readonly Dictionary<Type, FieldInfo[]> s_initializableFields = new Dictionary<Type, FieldInfo[]>();
+		[NonSerialized]
+		private HashSet<ISupportInitialize> m_initializable;
 	}
 }

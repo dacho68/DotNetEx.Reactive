@@ -8,4 +8,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright( "Copyright © Ivan Zlatanov" )]
 [assembly: CLSCompliant( false )]
 [assembly: ComVisible( false )]
-[assembly: AssemblyVersion( "0.9.3" )]
+[assembly: AssemblyVersion( "0.9.5" )]
