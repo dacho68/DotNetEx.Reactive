@@ -31,7 +31,7 @@ namespace DotNetEx.Reactive
 			}
 
 
-			public void UpdateSource( Object source )
+			public void Update( Object source )
 			{
 				if ( m_source != source )
 				{
@@ -45,34 +45,34 @@ namespace DotNetEx.Reactive
 							notifiable.PropertyChanged -= this.OnSourcePropertyChanged;
 						}
 					}
-				}
 
-				try
-				{
-					m_pendingRaise = true;
-
-					if ( source != null )
+					try
 					{
-						m_source = source;
-						var notifiable = source as INotifyPropertyChanged;
+						m_pendingRaise = true;
 
-						if ( notifiable != null )
+						if ( source != null )
 						{
-							notifiable.PropertyChanged += this.OnSourcePropertyChanged;
-						}
+							m_source = source;
+							var notifiable = source as INotifyPropertyChanged;
 
-						foreach ( var binding in m_bindings )
-						{
-							binding.Value.UpdateSource( this.GetValue( binding.Key ) );
+							if ( notifiable != null )
+							{
+								notifiable.PropertyChanged += this.OnSourcePropertyChanged;
+							}
+
+							foreach ( var binding in m_bindings )
+							{
+								binding.Value.Update( this.GetValue( binding.Key ) );
+							}
 						}
 					}
-				}
-				finally
-				{
-					m_pendingRaise = false;
-				}
+					finally
+					{
+						m_pendingRaise = false;
+					}
 
-				this.RaiseChanged();
+					this.RaiseChanged();
+				}
 			}
 
 
@@ -107,7 +107,7 @@ namespace DotNetEx.Reactive
 				{
 					foreach ( var binding in m_bindings.Values )
 					{
-						binding.UpdateSource( this.GetValue( e.PropertyName ) );
+						binding.Update( this.GetValue( e.PropertyName ) );
 					}
 				}
 				else
@@ -116,7 +116,7 @@ namespace DotNetEx.Reactive
 
 					if ( m_bindings.TryGetValue( e.PropertyName, out binding ) )
 					{
-						binding.UpdateSource( this.GetValue( e.PropertyName ) );
+						binding.Update( this.GetValue( e.PropertyName ) );
 					}
 				}
 			}
@@ -167,13 +167,20 @@ namespace DotNetEx.Reactive
 
 			lock ( m_lock )
 			{
-				if ( m_observers.Count == 0 )
+				m_observers.Add( key, observer );
+
+				TValue previousValue = m_currentValue;
+
+				if ( m_observers.Count == 1 )
 				{
-					m_binding.UpdateSource( m_source );
+					m_binding.Update( m_source );
 				}
 
-				m_observers.Add( key, observer );
-				observer.OnNext( m_currentValue );
+				// If the value hasn't changed, we need to publish it to the observer. 
+				if ( EqualityComparer<TValue>.Default.Equals( previousValue, m_currentValue ) )
+				{
+					observer.OnNext( previousValue );
+				}
 			}
 
 			return Disposable.Create( () =>
@@ -182,7 +189,9 @@ namespace DotNetEx.Reactive
 				{
 					if ( m_observers.Remove( key ) && m_observers.Count == 0 )
 					{
-						m_binding.UpdateSource( null );
+						m_binding.Update( null );
+
+						m_currentValue = default( TValue );
 					}
 				}
 			} );
