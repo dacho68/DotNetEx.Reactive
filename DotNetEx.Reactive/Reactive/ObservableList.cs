@@ -70,6 +70,56 @@ namespace DotNetEx.Reactive
 		}
 
 
+		public T First
+		{
+			get
+			{
+				if ( m_items.Count > 0 )
+				{
+					return m_items[ 0 ];
+				}
+
+				return default( T );
+			}
+			set
+			{
+				if ( m_items.Count == 0 )
+				{
+					this.Add( value );
+				}
+				else
+				{
+					this[ 0 ] = value;
+				}
+			}
+		}
+
+
+		public T Last
+		{
+			get
+			{
+				if ( m_items.Count > 0 )
+				{
+					return m_items[ m_items.Count - 1 ];
+				}
+
+				return default( T );
+			}
+			set
+			{
+				if ( m_items.Count == 0 )
+				{
+					this.Add( value );
+				}
+				else
+				{
+					this[ m_items.Count - 1 ] = value;
+				}
+			}
+		}
+
+
 		public T this[ Int32 index ]
 		{
 			get
@@ -83,6 +133,15 @@ namespace DotNetEx.Reactive
 				if ( !EqualityComparer<T>.Default.Equals( originalItem, value ) )
 				{
 					m_items[ index ] = value;
+
+					if ( index == 0 )
+					{
+						this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+					}
+					else if ( index == m_items.Count - 1 )
+					{
+						this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
+					}
 
 					this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 					this.RaiseCollectionChanged( NotifyCollectionChangedAction.Replace, originalItem, value, index );
@@ -98,6 +157,7 @@ namespace DotNetEx.Reactive
 			m_items.Add( item );
 
 			this.SetupItem( item, false );
+			this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 			this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 			this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 			this.RaiseCollectionChanged( NotifyCollectionChangedAction.Add, item, itemIndex );
@@ -111,6 +171,8 @@ namespace DotNetEx.Reactive
 				m_items.ForEach( x => this.SetupItem( x, true ) );
 				m_items.Clear();
 
+				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 				this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 				this.RaiseCollectionReset();
@@ -137,6 +199,8 @@ namespace DotNetEx.Reactive
 
 			if ( cleared || m_items.Count > 0 )
 			{
+				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 				this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 				this.RaiseCollectionReset();
@@ -179,6 +243,16 @@ namespace DotNetEx.Reactive
 			m_items.Insert( index, item );
 
 			this.SetupItem( item, false );
+
+			if ( index == 0 )
+			{
+				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+			}
+			else if ( index == m_items.Count - 1 )
+			{
+				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
+			}
+
 			this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 			this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 			this.RaiseCollectionChanged( NotifyCollectionChangedAction.Add, item, index );
@@ -207,15 +281,72 @@ namespace DotNetEx.Reactive
 			m_items.RemoveAt( index );
 
 			this.SetupItem( item, true );
+
+			if ( index == 0 )
+			{
+				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+			}
+			else if ( index == m_items.Count - 2 )
+			{
+				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
+			}
+
 			this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 			this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
 			this.RaiseCollectionChanged( NotifyCollectionChangedAction.Remove, item, index );
 		}
 
 
+		public void MoveItem( Int32 oldIndex, Int32 newIndex )
+		{
+			if ( oldIndex < 0 || oldIndex >= m_items.Count )
+			{
+				throw new ArgumentOutOfRangeException( "oldIndex" );
+			}
+			else if ( newIndex < 0 || newIndex >= m_items.Count )
+			{
+				throw new ArgumentOutOfRangeException( "newIndex" );
+			}
+
+			if ( oldIndex != newIndex )
+			{
+				T removedItem = m_items[ oldIndex ];
+
+				m_items.RemoveAt( oldIndex );
+				m_items.Insert( newIndex, removedItem );
+
+				if ( oldIndex == 0 || newIndex == 0 )
+				{
+					this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+				}
+
+				if ( oldIndex == m_items.Count - 1 || newIndex == m_items.Count - 1 )
+				{
+					this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
+				}
+
+				this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
+				this.RaiseCollectionChanged( NotifyCollectionChangedAction.Move, removedItem, newIndex, oldIndex );
+			}
+		}
+
+
 		public void ForEach( Action<T> action )
 		{
 			m_items.ForEach( action );
+		}
+
+
+		public void Sort( Comparison<T> comparison )
+		{
+			if ( m_items.Count > 0 )
+			{
+				m_items.Sort( comparison );
+
+				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
+				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
+				this.RaiseCollectionReset();
+			}
 		}
 
 
@@ -475,6 +606,30 @@ namespace DotNetEx.Reactive
 		}
 
 
+		private void RaiseCollectionChanged( NotifyCollectionChangedAction action, T oldItem, Int32 index, Int32 oldIndex )
+		{
+			var handler = this.CollectionChanged;
+			NotifyCollectionChangedEventArgs args = null;
+
+			if ( handler != null )
+			{
+				args = new NotifyCollectionChangedEventArgs( action, oldItem, index, oldIndex );
+
+				handler( this, args );
+			}
+
+			if ( m_collectionChanges != null )
+			{
+				if ( args == null )
+				{
+					args = new NotifyCollectionChangedEventArgs( action, oldItem, index, oldIndex );
+				}
+
+				m_collectionChanges.OnNext( args );
+			}
+		}
+
+
 		private void RaiseCollectionReset()
 		{
 			var handler = this.CollectionChanged;
@@ -524,6 +679,8 @@ namespace DotNetEx.Reactive
 
 		private const String INDEXER_PROPERTY_NAME = "Item[]"; // This must agree with Binding.IndexerName. It is declared separately here so as to avoid a dependency on PresentationFramework.dll.
 		private const String COUNT_PROPERTY_NAME = "Count";
+		private const String FIRST_ITEM_PROPERTY_NAME = "First";
+		private const String LAST_ITEM_PROPERTY_NAME = "Last";
 
 		private static readonly Boolean s_childrenSupportNotifyPropertyChanged = typeof( INotifyPropertyChanged ).IsAssignableFrom( typeof( T ) );
 		private static readonly Boolean s_childrenSupportChangeTracking = typeof( IChangeTracking ).IsAssignableFrom( typeof( T ) );

@@ -60,6 +60,7 @@
     <Compile Include="Reactive\IObservableList.cs" />
     <Compile Include="Reactive\IObservableObject.cs" />
     <Compile Include="Reactive\ObservableDictionaryKey.cs" />
+    <Compile Include="Internal\ObservableExpression.cs" />
     <Compile Include="Reactive\ReferencesAttribute.cs" />
     <Compile Include="Cache\AppCache.cs" />
     <Compile Include="Cache\AppCacheItem.cs" />

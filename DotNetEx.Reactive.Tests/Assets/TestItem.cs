@@ -57,8 +57,32 @@ namespace DotNetEx.Reactive
 		}
 
 
+		public TestItem Child
+		{
+			get
+			{
+				return m_child;
+			}
+			set
+			{
+				this.PropertyChanged.RaiseWhenChanged( this, ref m_child, value );
+			}
+		}
+
+
+		public ObservableList<TestItem> Children
+		{
+			get
+			{
+				return m_children;
+			}
+		}
+
+
 		private String m_name;
 		private Int32 m_age;
 		private Int32 m_id;
+		private TestItem m_child;
+		private readonly ObservableList<TestItem> m_children = new ObservableList<TestItem>();
 	}
 }

@@ -11,5 +11,8 @@ namespace DotNetEx.Reactive
 
 
 		IObservable<NotifyCollectionChangedEventArgs> CollectionChanges { get; }
+
+
+		void Sort( Comparison<T> comparison );
 	}
 }

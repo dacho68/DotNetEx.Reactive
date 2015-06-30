@@ -195,37 +195,7 @@ namespace DotNetEx.Reactive
 		{
 			Check.NotNull( expression, "expression" );
 
-			MemberExpressionVisitor<T> visitor = new MemberExpressionVisitor<T>();
-			expression = (Expression<Func<T, TValue>>)visitor.Visit( expression );
-
-			HashSet<String> members = visitor.Members;
-			Func<T, TValue> selector = expression.Compile();
-			IObservable<PropertyChangedEventArgs> changes;
-
-			if ( source is ObservableObject )
-			{
-				changes = ( (ObservableObject)(Object)source ).PropertyChanges;
-			}
-			else
-			{
-				changes = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>( x => source.PropertyChanged += x, x => source.PropertyChanged -= x ).Select( x => x.EventArgs );
-			}
-
-			if ( members.Count > 0 )
-			{
-				return changes
-					.Where( x => members.Contains( x.PropertyName ) )
-					.Select( x => selector( source ) )
-					.Publish( selector( source ) )
-					.RefCount()
-					.DistinctUntilChanged();
-			}
-
-			return changes
-				.Select( x => selector( source ) )
-				.Publish( selector( source ) )
-				.RefCount()
-				.DistinctUntilChanged();
+			return new ObservableExpression<T, TValue>( source, expression );
 		}
 
 
