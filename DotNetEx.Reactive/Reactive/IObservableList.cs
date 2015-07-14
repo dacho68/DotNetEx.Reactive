@@ -14,5 +14,11 @@ namespace DotNetEx.Reactive
 
 
 		void Sort( Comparison<T> comparison );
+
+
+		/// <summary>
+		/// This method removes all items which matches the predicate.
+		/// </summary>
+		Int32 RemoveAll( Predicate<T> match );
 	}
 }

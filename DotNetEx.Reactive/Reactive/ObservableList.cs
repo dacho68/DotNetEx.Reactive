@@ -8,19 +8,32 @@ using System.Reactive.Subjects;
 
 namespace DotNetEx.Reactive
 {
+	/// <summary>
+	/// Implementation of a dynamic data collection based on ObservableObject that uses List&lt;T&gt; as internal container, 
+	/// implementing INotifyCollectionChanged to notify listeners when items get added, removed or the whole list is refreshed.
+	/// </summary>
 	public class ObservableList<T> : ObservableObject, IObservableList<T>
 	{
+		/// <summary>
+		/// Initializes a new empty instance of ObservableList.
+		/// </summary>
 		public ObservableList()
 		{
 			m_items = new List<T>();
 		}
 
 
-		public ObservableList( IEnumerable<T> items )
+		/// <summary>
+		/// Initializes a new instance of ObservableList class that contains
+		/// elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied.
+		/// </summary>
+		/// <param name="collection">The collection whose elements are copied to the new list.</param>
+		/// <exception cref="ArgumentNullException">collection is a null reference</exception>
+		public ObservableList( IEnumerable<T> collection )
 		{
-			Check.NotNull( items, "items" );
+			Check.NotNull( collection, "collection" );
 
-			m_items = new List<T>( items );
+			m_items = new List<T>( collection );
 			m_items.ForEach( x => this.SetupItem( x, false, true ) );
 		}
 
@@ -347,6 +360,29 @@ namespace DotNetEx.Reactive
 				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaiseCollectionReset();
 			}
+		}
+
+
+		/// <summary>
+		/// This method removes all items which matches the predicate.
+		/// </summary>
+		public Int32 RemoveAll( Predicate<T> match )
+		{
+			Check.NotNull( match, "match" );
+
+			Int32 removeCount = 0;
+
+			for ( Int32 i = this.Count - 1; i >= 0; --i )
+			{
+				if ( match( this[ i ] ) )
+				{
+					this.RemoveAt( i );
+
+					++removeCount;
+				}
+			}
+
+			return removeCount;
 		}
 
 
