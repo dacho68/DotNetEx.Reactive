@@ -10,7 +10,7 @@ namespace DotNetEx.Reactive
 		public ObservableDictionary()
 		{
 			m_key = new T();
-			m_map = new Dictionary<TKey, TValue>( m_key.Comparer );
+			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
 		}
 
 
@@ -20,43 +20,123 @@ namespace DotNetEx.Reactive
 			Check.NotNull( items, "items" );
 
 			m_key = new T();
-			m_map = new Dictionary<TKey, TValue>( m_key.Comparer );
+			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
 
-			foreach ( var item in this )
+			for ( Int32 i = 0; i < this.Count; ++i )
 			{
-				m_map.Add( m_key.GetKey( item ), item );
+				m_indexes.Add( m_key.GetKey( this[ i ] ), i );
 			}
 		}
 
 
-		public IReadOnlyDictionary<TKey, TValue> Map
-		{
-			get
-			{
-				return m_map;
-			}
-		}
-
-
+		/// <summary>
+		///  Determines whether the collection contains the specified key. 
+		/// </summary>
 		public Boolean ContainsKey( TKey key )
 		{
-			return m_map.ContainsKey( key );
+			return m_indexes.ContainsKey( key );
 		}
 
 
-		protected override void OnItemAdded( TValue item )
+		/// <summary>
+		/// Removes the value located at the specified key.
+		/// </summary>
+		/// <returns>True if the key existed, False when it didn't</returns>
+		public Boolean RemoveKey( TKey key )
 		{
-			m_map[ m_key.GetKey( item ) ] = item;
+			Int32 index = this.IndexOfKey( key );
+
+			if ( index > -1 )
+			{
+				this.RemoveAt( index );
+
+				return true;
+			}
+
+			return false;
+		}
+
+
+		public Int32 IndexOfKey( TKey key )
+		{
+			Int32 index;
+
+			if ( !m_indexes.TryGetValue( key, out index ) )
+			{
+				index = -1;
+			}
+
+			return index;
+		}
+
+
+		public Boolean TryGetValue( TKey key, out TValue value )
+		{
+			Int32 index = this.IndexOfKey( key );
+			value = index > -1 ? this[ index ] : default( TValue );
+
+			return index > -1;
+		}
+
+
+		/// <summary>
+		/// Returns the value associated with the specified key.
+		/// </summary>
+		/// <exception cref="System.Collections.Generic.KeyNotFoundException">the key doesn't exist</exception>
+		public TValue GetValue( TKey key )
+		{
+			Int32 index = this.IndexOfKey( key );
+
+			if ( index < 0 )
+			{
+				throw new KeyNotFoundException();
+			}
+
+			return this[ index ];
+		}
+
+
+		public void AddOrUpdate( TValue value )
+		{
+			TKey key = m_key.GetKey( value );
+			var index = this.IndexOfKey( key );
+
+			if ( index > -1 )
+			{
+				this[ index ] = value;
+			}
+			else
+			{
+				this.Add( value );
+			}
+		}
+
+
+		protected override void OnItemAdded( TValue item, Int32 index )
+		{
+			m_indexes[ m_key.GetKey( item ) ] = index;
+
+			base.OnItemAdded( item, index );
 		}
 
 
 		protected override void OnItemRemoved( TValue item )
 		{
-			m_map.Remove( m_key.GetKey( item ) );
+			m_indexes.Remove( m_key.GetKey( item ) );
+
+			base.OnItemRemoved( item );
 		}
 
 
-		private readonly Dictionary<TKey, TValue> m_map;
+		protected override void OnItemMoved( TValue item, Int32 newIndex )
+		{
+			m_indexes[ m_key.GetKey( item ) ] = newIndex;
+
+			base.OnItemMoved( item, newIndex );
+		}
+
+
+		private readonly Dictionary<TKey, Int32> m_indexes;
 		private readonly ObservableDictionaryKey<TValue, TKey> m_key;
 	}
 

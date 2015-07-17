@@ -122,6 +122,11 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Sets the value at the target location only if it is different. The comparison is done using EqualityComparer&lt;T&gt;.Default.
+		/// If the value is changed then property changed notifications are triggered.
+		/// </summary>
+		/// <returns>whether the value has changed</returns>
 		protected Boolean SetValue<T>( ref T value, T newValue, [CallerMemberName] String propertyName = null )
 		{
 			if ( !EqualityComparer<T>.Default.Equals( value, newValue ) )
@@ -274,7 +279,10 @@ namespace DotNetEx.Reactive
 					notifiable.PropertyChanged -= OnItemPropertyChanged;
 				}
 
-				m_trackable.Remove( item );
+				if ( m_trackable == null )
+				{
+					m_trackable.Remove( item );
+				}
 
 				var initializable = item as ISupportInitialize;
 

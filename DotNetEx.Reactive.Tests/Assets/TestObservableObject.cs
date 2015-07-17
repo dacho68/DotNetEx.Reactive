@@ -5,19 +5,23 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetEx.Reactive.Assets
+namespace DotNetEx.Reactive
 {
 	[DataContract]
-	public sealed class TestObservableObject : ObservableObject
+	public sealed class TestObservableObject : ObservableObject, IObservableDictionaryKey<Int32>
 	{
-		public TestObservableObject()
+		public TestObservableObject( Int32 id = 0 )
 		{
 			this.BeginInit();
 
+			this.Id = id;
 			this.Children = new ObservableList<TestObservableObject>();
 
 			this.EndInit();
 		}
+
+
+		public Int32 Id { get; private set; }
 
 
 		[DataMember]
@@ -73,6 +77,12 @@ namespace DotNetEx.Reactive.Assets
 			{
 				this.SetValue( ref m_children, value );
 			}
+		}
+
+
+		Int32 IObservableDictionaryKey<Int32>.GetKey()
+		{
+			return this.Id;
 		}
 
 

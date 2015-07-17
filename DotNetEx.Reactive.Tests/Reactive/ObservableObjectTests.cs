@@ -1,9 +1,8 @@
 ﻿using System.IO;
 using System.Runtime.Serialization;
-using DotNetEx.Reactive.Assets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DotNetEx.Reactive.Reactive
+namespace DotNetEx.Reactive
 {
 	[TestClass]
 	public sealed class ObservableObjectTests

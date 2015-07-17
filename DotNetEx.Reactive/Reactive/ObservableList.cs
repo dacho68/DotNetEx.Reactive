@@ -34,7 +34,11 @@ namespace DotNetEx.Reactive
 			Check.NotNull( collection, "collection" );
 
 			m_items = new List<T>( collection );
-			m_items.ForEach( x => this.SetupItem( x, false, true ) );
+
+			for ( Int32 i = 0; i < m_items.Count; ++i )
+			{
+				this.SetupItem( m_items[ i ], i, false, true );
+			}
 		}
 
 
@@ -169,7 +173,7 @@ namespace DotNetEx.Reactive
 
 			m_items.Add( item );
 
-			this.SetupItem( item, false );
+			this.SetupItem( item, itemIndex, false );
 			this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 			this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 			this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
@@ -181,7 +185,7 @@ namespace DotNetEx.Reactive
 		{
 			if ( m_items.Count > 0 )
 			{
-				m_items.ForEach( x => this.SetupItem( x, true ) );
+				m_items.ForEach( x => this.SetupItem( x, -1, true ) );
 				m_items.Clear();
 
 				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
@@ -201,14 +205,18 @@ namespace DotNetEx.Reactive
 
 			if ( m_items.Count > 0 )
 			{
-				m_items.ForEach( x => this.SetupItem( x, true ) );
+				m_items.ForEach( x => this.SetupItem( x, -1, true ) );
 				m_items.Clear();
 
 				cleared = true;
 			}
 
 			m_items.AddRange( items );
-			m_items.ForEach( x => this.SetupItem( x, false ) );
+
+			for ( Int32 i = 0; i < m_items.Count; ++i )
+			{
+				this.SetupItem( m_items[ i ], i, false );
+			}
 
 			if ( cleared || m_items.Count > 0 )
 			{
@@ -255,7 +263,12 @@ namespace DotNetEx.Reactive
 		{
 			m_items.Insert( index, item );
 
-			this.SetupItem( item, false );
+			this.SetupItem( item, index, false );
+
+			for ( Int32 i = index + 1; i < m_items.Count; ++i )
+			{
+				this.OnItemMoved( m_items[ i ], i );
+			}
 
 			if ( index == 0 )
 			{
@@ -293,7 +306,12 @@ namespace DotNetEx.Reactive
 
 			m_items.RemoveAt( index );
 
-			this.SetupItem( item, true );
+			this.SetupItem( item, -1, true );
+
+			for ( Int32 i = index; i < m_items.Count; ++i )
+			{
+				this.OnItemMoved( m_items[ i ], i );
+			}
 
 			if ( index == 0 )
 			{
@@ -328,6 +346,22 @@ namespace DotNetEx.Reactive
 				m_items.RemoveAt( oldIndex );
 				m_items.Insert( newIndex, removedItem );
 
+				// All items between oldIndex and newIndex have their indexes invalidated.
+				if ( oldIndex < newIndex )
+				{
+					for ( Int32 i = oldIndex; i <= newIndex; ++i )
+					{
+						this.OnItemMoved( m_items[ i ], i );
+					}
+				}
+				else
+				{
+					for ( Int32 i = newIndex; i <= oldIndex; ++i )
+					{
+						this.OnItemMoved( m_items[ i ], i );
+					}
+				}
+
 				if ( oldIndex == 0 || newIndex == 0 )
 				{
 					this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
@@ -359,6 +393,11 @@ namespace DotNetEx.Reactive
 				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaiseCollectionReset();
+
+				for ( Int32 i = 0; i < m_items.Count; ++i )
+				{
+					this.OnItemMoved( m_items[ i ], i );
+				}
 			}
 		}
 
@@ -374,9 +413,19 @@ namespace DotNetEx.Reactive
 
 			for ( Int32 i = this.Count - 1; i >= 0; --i )
 			{
-				if ( match( this[ i ] ) )
+				if ( match( m_items[ i ] ) )
 				{
 					this.RemoveAt( i );
+
+					// If the removed item wasn't at the end, all elements after it
+					// must be considered moved by -1.
+					if ( i < this.Count - 1 )
+					{
+						for ( Int32 movedIndex = i; movedIndex < this.Count - 1; ++movedIndex )
+						{
+							this.OnItemMoved( m_items[ movedIndex ], movedIndex );
+						}
+					}
 
 					++removeCount;
 				}
@@ -403,13 +452,30 @@ namespace DotNetEx.Reactive
 		}
 
 
-		protected virtual void OnItemAdded( T item )
+		protected virtual void OnItemAdded( T item, Int32 index )
 		{
+			if ( !this.IsInitializing && !this.IsChanged )
+			{
+				this.IsChanged = true;
+			}
 		}
 
 
 		protected virtual void OnItemRemoved( T item )
 		{
+			if ( !this.IsInitializing && !this.IsChanged )
+			{
+				this.IsChanged = true;
+			}
+		}
+
+
+		protected virtual void OnItemMoved( T item, Int32 newIndex )
+		{
+			if ( !this.IsInitializing && !this.IsChanged )
+			{
+				this.IsChanged = true;
+			}
 		}
 
 
@@ -447,7 +513,7 @@ namespace DotNetEx.Reactive
 		}
 
 
-		private void SetupItem( T item, Boolean remove, Boolean constructor = false )
+		private void SetupItem( T item, Int32 index, Boolean remove, Boolean constructor = false )
 		{
 			if ( s_childrenSupportNotifyPropertyChanged )
 			{
@@ -484,7 +550,7 @@ namespace DotNetEx.Reactive
 				}
 				else
 				{
-					this.OnItemAdded( item );
+					this.OnItemAdded( item, index );
 				}
 			}
 		}

@@ -5,9 +5,14 @@ namespace DotNetEx.Reactive
 {
 	public interface IObservableDictionary<TKey, TValue> : IObservableList<TValue>
 	{
-		IReadOnlyDictionary<TKey, TValue> Map { get; }
-
+		Int32 IndexOfKey( TKey key );
 
 		Boolean ContainsKey( TKey key );
+		Boolean RemoveKey( TKey key );
+
+		Boolean TryGetValue( TKey key, out TValue value );
+		TValue GetValue( TKey key );
+
+		void AddOrUpdate( TValue value );
 	}
 }

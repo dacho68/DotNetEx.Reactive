@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DotNetEx.Reactive
 {
-	[TestClass]
 	public sealed partial class Tests
 	{
 		[TestMethod]
