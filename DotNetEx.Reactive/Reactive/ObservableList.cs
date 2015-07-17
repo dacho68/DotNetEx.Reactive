@@ -42,9 +42,15 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Event for notifying about changes in the list such as Add, Remove, Reset, Move.
+		/// </summary>
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 
 
+		/// <summary>
+		/// An observable for the CollectionChanged event.
+		/// </summary>
 		public IObservable<NotifyCollectionChangedEventArgs> CollectionChanges
 		{
 			get
@@ -59,6 +65,9 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// An observable for changes in the items contained in this list.
+		/// </summary>
 		public IObservable<RxPropertyChange<T>> ItemsChanges
 		{
 			get
@@ -78,6 +87,9 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Returns how many elements are in the list.
+		/// </summary>
 		public Int32 Count
 		{
 			get
@@ -87,6 +99,10 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Gets or sets the first item in the list. If the list is empty, the getter will return default( T ).
+		/// The setter will add the value to the collection if the list is empty or replace the first item.
+		/// </summary>
 		public T First
 		{
 			get
@@ -112,6 +128,10 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Gets or sets the last item in the list. If the list is empty, the getter will return default( T ).
+		/// The setter will add the value to the collection if the list is empty or replace the last item.
+		/// </summary>
 		public T Last
 		{
 			get
@@ -149,6 +169,9 @@ namespace DotNetEx.Reactive
 
 				if ( !EqualityComparer<T>.Default.Equals( originalItem, value ) )
 				{
+					this.SetupItem( originalItem, -1, true );
+					this.SetupItem( value, index, false );
+
 					m_items[ index ] = value;
 
 					if ( index == 0 )

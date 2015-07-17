@@ -122,5 +122,23 @@ namespace DotNetEx.Reactive
 			Assert.AreEqual( false, list[ 0 ].IsChanged );
 			Assert.AreEqual( false, list.IsChanged );
 		}
+
+
+		[TestMethod]
+		public void ObservableDictionary_Case_7()
+		{
+			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
+
+			list.BeginInit();
+			list.Add( new TestObservableObject( 1 ) );
+			list.Add( new TestObservableObject( 2 ) );
+			list.EndInit();
+
+			Assert.AreEqual( false, list.IsChanged );
+
+			list.AddOrUpdate( new TestObservableObject( 1 ) );
+
+			Assert.AreEqual( true, list.IsChanged );
+		}
 	}
 }
