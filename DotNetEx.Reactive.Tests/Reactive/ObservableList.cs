@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,6 +37,29 @@ namespace DotNetEx.Reactive
 
 			Assert.AreEqual( 3, list.RemoveAll( x => true ) );
 			Assert.AreEqual( 0, list.Count );
+		}
+
+
+		[TestMethod]
+		[Description( "" )]
+		public void ObservableList_Case_3()
+		{
+			Stopwatch watch = new Stopwatch();
+			watch.Start();
+
+			ObservableList<TestObservableObject> lists = new ObservableList<TestObservableObject>( Enumerable.Range( 1, 1000 ).Select( x => new TestObservableObject( x ) ) );
+
+			lists.BeginInit();
+
+			foreach ( var list in lists )
+			{
+				list.Children = new ObservableList<TestObservableObject>( Enumerable.Range( 1, 100 ).Select( x => new TestObservableObject( x ) ) );
+			}
+
+			lists.EndInit();
+			watch.Stop();
+
+			Assert.IsTrue( watch.ElapsedMilliseconds < 100 );
 		}
 	}
 }

@@ -12,12 +12,8 @@ namespace DotNetEx.Reactive
 	{
 		public TestObservableObject( Int32 id = 0 )
 		{
-			this.BeginInit();
-
 			this.Id = id;
-			this.Children = new ObservableList<TestObservableObject>();
-
-			this.EndInit();
+			this.InitValue( ref m_children, new ObservableList<TestObservableObject>() );
 		}
 
 
@@ -73,7 +69,7 @@ namespace DotNetEx.Reactive
 			{
 				return m_children;
 			}
-			private set
+			set
 			{
 				this.SetValue( ref m_children, value );
 			}

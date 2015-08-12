@@ -6,6 +6,7 @@ using System.Reactive.Subjects;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using DotNetEx.Internal;
 
 namespace DotNetEx.Reactive
 {
@@ -56,7 +57,7 @@ namespace DotNetEx.Reactive
 		{
 			get
 			{
-				return m_init > 0;
+				return m_init;
 			}
 		}
 
@@ -68,12 +69,9 @@ namespace DotNetEx.Reactive
 				this.IsChanged = false;
 
 				// Propagate the accept changes to nested items
-				if ( m_trackable != null && m_trackable.Count > 0 )
+				if ( m_acceptChanges != null )
 				{
-					foreach ( var value in m_trackable.Where( x => x.IsChanged ) )
-					{
-						value.AcceptChanges();
-					}
+					m_acceptChanges();
 				}
 			}
 		}
@@ -81,44 +79,38 @@ namespace DotNetEx.Reactive
 
 		public void BeginInit()
 		{
-			if ( ++m_init == 1 )
+			if ( m_init )
 			{
-				this.OnBeginInit();
-				this.RaisePropertyChanged( "IsInitializing" );
-
-				// Propagate the begin init to nested items
-				if ( m_initializable != null && m_initializable.Count > 0 )
-				{
-					foreach ( var value in m_initializable )
-					{
-						value.BeginInit();
-					}
-				}
+				throw new InvalidOperationException( "The object is already being initialized." );
 			}
+
+			m_init = true;
+			this.RaisePropertyChanged( "IsInitializing" );
 		}
 
 
 		public void EndInit()
 		{
-			if ( m_init == 0 )
+			if ( !m_init )
 			{
 				throw new InvalidOperationException( "BeginInit must be callled before EndInit." );
 			}
 
-			if ( --m_init == 0 )
-			{
-				this.OnEndInit();
-				this.RaisePropertyChanged( "IsInitializing" );
+			m_init = false;
+			this.RaisePropertyChanged( "IsInitializing" );
+		}
 
-				// Propagate the begin init to nested items
-				if ( m_initializable != null && m_initializable.Count > 0 )
-				{
-					foreach ( var value in m_initializable )
-					{
-						value.EndInit();
-					}
-				}
-			}
+
+		/// <summary>
+		/// Sets the value at the target location without triggering any events. Use this method
+		/// instead of the combination BeginInit + SetValue + EndInit.
+		/// </summary>
+		protected void InitValue<T>( ref T target, T value )
+		{
+			this.Detach( target );
+			this.Attach( value );
+
+			target = value;
 		}
 
 
@@ -131,11 +123,8 @@ namespace DotNetEx.Reactive
 		{
 			if ( !EqualityComparer<T>.Default.Equals( value, newValue ) )
 			{
-				if ( typeof( IChangeTracking ).IsAssignableFrom( typeof( T ) ) )
-				{
-					this.Detach( (IChangeTracking)value );
-					this.Attach( (IChangeTracking)newValue );
-				}
+				this.Detach( value );
+				this.Attach( newValue );
 
 				this.OnPropertyChanging( propertyName );
 
@@ -166,16 +155,6 @@ namespace DotNetEx.Reactive
 		}
 
 
-		protected virtual void OnBeginInit()
-		{
-		}
-
-
-		protected virtual void OnEndInit()
-		{
-		}
-
-
 		protected void RaisePropertyChanged( [CallerMemberName] String propertyName = null )
 		{
 			var handler = this.PropertyChanged;
@@ -194,9 +173,14 @@ namespace DotNetEx.Reactive
 					m_propertyChanges.OnNext( args );
 				}
 
-				foreach ( var referencePropertyName in ReferencesAttribute.Get( this.GetType(), propertyName ) )
+				var referencedProperties = ReferencesAttribute.Get( this.GetType(), propertyName );
+
+				if ( referencedProperties.Count > 0 )
 				{
-					this.RaisePropertyChanged( referencePropertyName );
+					foreach ( var referencePropertyName in referencedProperties )
+					{
+						this.RaisePropertyChanged( referencePropertyName );
+					}
 				}
 			}
 		}
@@ -229,71 +213,34 @@ namespace DotNetEx.Reactive
 
 
 		private void Attach<T>( T item )
-			where T : IChangeTracking
 		{
-			if ( item != null )
+			if ( !Object.ReferenceEquals( item, null ) )
 			{
-				var initializable = item as ISupportInitialize;
-
-				if ( initializable != null )
+				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 				{
-					if ( m_initializable == null )
-					{
-						m_initializable = new HashSet<ISupportInitialize>( ReferenceEqualityComparer<ISupportInitialize>.Instance );
-					}
-
-					m_initializable.Add( initializable );
-
-					if ( this.IsInitializing )
-					{
-						initializable.BeginInit();
-					}
+					m_acceptChanges += ( (IChangeTracking)item ).AcceptChanges;
 				}
 
-				if ( m_trackable == null )
+				if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 				{
-					m_trackable = new HashSet<IChangeTracking>( ReferenceEqualityComparer<IChangeTracking>.Instance );
-				}
-
-				m_trackable.Add( item );
-
-				var notifiable = item as INotifyPropertyChanged;
-
-				if ( notifiable != null )
-				{
-					notifiable.PropertyChanged += OnItemPropertyChanged;
+					( (INotifyPropertyChanged)item ).PropertyChanged += OnItemPropertyChanged;
 				}
 			}
 		}
 
 
 		private void Detach<T>( T item )
-			where T : IChangeTracking
 		{
-			if ( item != null )
+			if ( !Object.ReferenceEquals( item, null ) )
 			{
-				var notifiable = item as INotifyPropertyChanged;
-
-				if ( notifiable != null )
+				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 				{
-					notifiable.PropertyChanged -= OnItemPropertyChanged;
+					m_acceptChanges -= ( (IChangeTracking)item ).AcceptChanges;
 				}
 
-				if ( m_trackable == null )
+				if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 				{
-					m_trackable.Remove( item );
-				}
-
-				var initializable = item as ISupportInitialize;
-
-				if ( initializable != null )
-				{
-					m_initializable.Remove( initializable );
-
-					if ( this.IsInitializing )
-					{
-						initializable.EndInit();
-					}
+					( (INotifyPropertyChanged)item ).PropertyChanged -= OnItemPropertyChanged;
 				}
 			}
 		}
@@ -305,12 +252,9 @@ namespace DotNetEx.Reactive
 		private Subject<PropertyChangedEventArgs> m_propertyChanges;
 		
 		[NonSerialized]
-		private Int32 m_init = 0;
+		private Boolean m_init = false;
 		
 		[NonSerialized]
-		private HashSet<IChangeTracking> m_trackable;
-
-		[NonSerialized]
-		private HashSet<ISupportInitialize> m_initializable;
+		private Action m_acceptChanges = null;
 	}
 }

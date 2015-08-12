@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Annotations\OnPropertyChangingAttribute.cs" />
     <Compile Include="Annotations\OnPropertyChangedAttribute.cs" />
+    <Compile Include="Internal\ReflectionTraits.cs" />
     <Compile Include="Reactive\IObservableDictionaryKey.cs" />
     <Compile Include="Reactive\IObservableDictionary.cs" />
     <Compile Include="Reactive\IObservableList.cs" />
@@ -80,7 +81,6 @@
     <Compile Include="Reactive\ObservableObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reactive\RxProperty.cs" />
-    <Compile Include="Reactive\RxCommandContext.cs" />
     <Compile Include="Reactive\RxCommandSource.cs" />
     <Compile Include="Reactive\RxApp.cs" />
     <Compile Include="Reactive\RxCommand.cs" />

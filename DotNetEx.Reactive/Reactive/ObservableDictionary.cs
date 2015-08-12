@@ -14,6 +14,14 @@ namespace DotNetEx.Reactive
 		}
 
 
+		public ObservableDictionary( Int32 capacity ) :
+			base( capacity )
+		{
+			m_key = new T();
+			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
+		}
+
+
 		public ObservableDictionary( IEnumerable<TValue> items ) :
 			base( items )
 		{

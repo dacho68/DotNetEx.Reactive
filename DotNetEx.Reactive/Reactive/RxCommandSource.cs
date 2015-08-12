@@ -52,8 +52,8 @@ namespace DotNetEx.Reactive
 		{
 			Check.NotNull( other, "other" );
 
-			RxCommand	dummy		= new RxCommand( RxCommand.DoNothing );
-			String		dummyKey	= Guid.NewGuid().ToString();
+			RxCommand dummy	= new RxCommand( _ => { } );
+			String dummyKey	= Guid.NewGuid().ToString();
 
 			// Adding the same command in both command sources acts as a bridge for the IsBusy property.
 			other.Add( dummyKey, dummy );
@@ -122,7 +122,7 @@ namespace DotNetEx.Reactive
 		{
 			RxCommand command;
 
-			if ( m_commands.TryGetValue( commandName, out command ) && command.CanExecute( parameter ))
+			if ( m_commands.TryGetValue( commandName, out command ) && command.CanExecute( parameter ) )
 			{
 				command.Execute( parameter );
 
@@ -141,7 +141,7 @@ namespace DotNetEx.Reactive
 		public RxCommand Get( String commandName )
 		{
 			Check.NotEmpty( commandName, "commandName" );
-			
+
 			RxCommand command;
 
 			if ( !m_commands.TryGetValue( commandName, out command ) )
@@ -174,9 +174,9 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public RxCommand Add( String commandName, Func<Object, Task> handler )
+		public RxCommand AddTask( String commandName, Func<Object, Task> handler )
 		{
-			return this.Add( commandName, handler, Observable.Return( true ) );
+			return this.AddTask( commandName, handler, Observable.Return( true ) );
 		}
 
 
@@ -190,7 +190,7 @@ namespace DotNetEx.Reactive
 			if ( !m_commands.TryGetValue( commandName, out command ) )
 			{
 				command = new RxCommand( handler, canExecute );
-				command.PropertyChangedInternal += OnCommandPropertyChanged;
+				command.PropertyChanged += OnCommandPropertyChanged;
 
 				m_commands.Add( commandName, command );
 			}
@@ -205,7 +205,7 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public RxCommand Add( String commandName, Func<Object, Task> handler, IObservable<Boolean> canExecute )
+		public RxCommand AddTask( String commandName, Func<Object, Task> handler, IObservable<Boolean> canExecute )
 		{
 			Check.NotEmpty( commandName, "commandName" );
 			Check.NotNull( handler, "handler" );
@@ -215,7 +215,7 @@ namespace DotNetEx.Reactive
 			if ( !m_commands.TryGetValue( commandName, out command ) )
 			{
 				command = new RxCommand( handler, canExecute );
-				command.PropertyChangedInternal += OnCommandPropertyChanged;
+				command.PropertyChanged += OnCommandPropertyChanged;
 
 				m_commands.Add( commandName, command );
 			}
@@ -237,7 +237,7 @@ namespace DotNetEx.Reactive
 
 			if ( !m_commands.ContainsKey( commandName ) )
 			{
-				command.PropertyChangedInternal += OnCommandPropertyChanged;
+				command.PropertyChanged += OnCommandPropertyChanged;
 
 				m_commands.Add( commandName, command );
 			}
@@ -259,7 +259,7 @@ namespace DotNetEx.Reactive
 
 			if ( m_commands.TryGetValue( commandName, out command ) )
 			{
-				command.PropertyChangedInternal -= OnCommandPropertyChanged;
+				command.PropertyChanged -= OnCommandPropertyChanged;
 				command.Dispose();
 			}
 
@@ -283,7 +283,7 @@ namespace DotNetEx.Reactive
 		public override Boolean TryGetMember( GetMemberBinder binder, out Object result )
 		{
 			RxCommand command;
-			
+
 			Boolean success = m_commands.TryGetValue( binder.Name, out command );
 			result = command;
 

@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Subjects;
+using DotNetEx.Internal;
 
 namespace DotNetEx.Reactive
 {
@@ -23,6 +24,12 @@ namespace DotNetEx.Reactive
 		}
 
 
+		public ObservableList( Int32 capacity )
+		{
+			m_items = new List<T>( capacity );
+		}
+
+
 		/// <summary>
 		/// Initializes a new instance of ObservableList class that contains
 		/// elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied.
@@ -37,7 +44,7 @@ namespace DotNetEx.Reactive
 
 			for ( Int32 i = 0; i < m_items.Count; ++i )
 			{
-				this.SetupItem( m_items[ i ], i, false, true );
+				this.SetupItem( m_items[ i ], i, remove: false, constructor: true );
 			}
 		}
 
@@ -72,7 +79,7 @@ namespace DotNetEx.Reactive
 		{
 			get
 			{
-				if ( !s_childrenSupportNotifyPropertyChanged )
+				if ( !ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 				{
 					return null;
 				}
@@ -464,7 +471,7 @@ namespace DotNetEx.Reactive
 			{
 				this.IsChanged = false;
 
-				if ( s_childrenSupportChangeTracking && m_items.Count > 0 )
+				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value && m_items.Count > 0 )
 				{
 					foreach ( var item in m_items.Cast<IChangeTracking>() )
 					{
@@ -502,43 +509,9 @@ namespace DotNetEx.Reactive
 		}
 
 
-		protected override void OnBeginInit()
-		{
-			if ( s_childrenSupportInitialize )
-			{
-				foreach ( ISupportInitialize item in m_items )
-				{
-					if ( item != null )
-					{
-						item.BeginInit();
-					}
-				}
-			}
-			
-			base.OnBeginInit();
-		}
-
-
-		protected override void OnEndInit()
-		{
-			if ( s_childrenSupportInitialize )
-			{
-				foreach ( ISupportInitialize item in m_items )
-				{
-					if ( item != null )
-					{
-						item.EndInit();
-					}
-				}
-			}
-			
-			base.OnEndInit();
-		}
-
-
 		private void SetupItem( T item, Int32 index, Boolean remove, Boolean constructor = false )
 		{
-			if ( s_childrenSupportNotifyPropertyChanged )
+			if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 			{
 				INotifyPropertyChanged observable = (INotifyPropertyChanged)item;
 
@@ -552,16 +525,6 @@ namespace DotNetEx.Reactive
 					{
 						observable.PropertyChanged += this.OnItemPropertyChanged;
 					}
-				}
-			}
-
-			if ( this.IsInitializing && s_childrenSupportInitialize )
-			{
-				ISupportInitialize initializable = (ISupportInitialize)item;
-
-				if ( initializable != null )
-				{
-					initializable.BeginInit();
 				}
 			}
 
@@ -786,7 +749,7 @@ namespace DotNetEx.Reactive
 				m_itemsChanges.OnNext( new RxPropertyChange<T>( (T)sender, e.PropertyName ) );
 			}
 
-			if ( !this.IsChanged && s_childrenSupportChangeTracking )
+			if ( !this.IsChanged && ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 			{
 				IChangeTracking item = (IChangeTracking)sender;
 
@@ -806,9 +769,5 @@ namespace DotNetEx.Reactive
 		private const String COUNT_PROPERTY_NAME = "Count";
 		private const String FIRST_ITEM_PROPERTY_NAME = "First";
 		private const String LAST_ITEM_PROPERTY_NAME = "Last";
-
-		private static readonly Boolean s_childrenSupportNotifyPropertyChanged = typeof( INotifyPropertyChanged ).IsAssignableFrom( typeof( T ) );
-		private static readonly Boolean s_childrenSupportChangeTracking = typeof( IChangeTracking ).IsAssignableFrom( typeof( T ) );
-		private static readonly Boolean s_childrenSupportInitialize = typeof( ISupportInitialize ).IsAssignableFrom( typeof( T ) );
 	}
 }

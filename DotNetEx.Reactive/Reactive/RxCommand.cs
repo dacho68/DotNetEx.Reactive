@@ -15,7 +15,16 @@ namespace DotNetEx.Reactive
 	/// </summary>
 	public sealed class RxCommand : ICommand, IDisposable, INotifyPropertyChanged
 	{
-		public static readonly Action<Object> DoNothing = ( x ) => { };
+		public RxCommand Create( Action<Object> handler, IObservable<Boolean> canExecute = null, Boolean initialState = true )
+		{
+			return new RxCommand( handler, canExecute ?? Observable.Return<Boolean>( true ), initialState );
+		}
+
+
+		public RxCommand CreateTask( Func<Object, Task> handler, IObservable<Boolean> canExecute = null, Boolean initialState = true )
+		{
+			return new RxCommand( handler, canExecute ?? Observable.Return<Boolean>( true ), initialState );
+		}
 
 
 		public RxCommand( Action<Object> handler ) :
@@ -43,6 +52,7 @@ namespace DotNetEx.Reactive
 			} );
 
 			m_handler = handler;
+			m_isAsync = false;
 			m_canExecuteLatest = initialState;
 			m_dispatcher = SynchronizationContext.Current;
 			m_canExecuteSubscription = canExecute.Subscribe( this.ChangeCanExecute );
@@ -73,7 +83,8 @@ namespace DotNetEx.Reactive
 				return Observable.Empty<Boolean>().Publish( false );
 			} );
 
-			m_asyncHandler = handler;
+			m_handler = handler;
+			m_isAsync = true;
 			m_canExecuteLatest = initialState;
 			m_dispatcher = SynchronizationContext.Current;
 			m_canExecuteSubscription = canExecute.Subscribe( this.ChangeCanExecute );
@@ -90,9 +101,6 @@ namespace DotNetEx.Reactive
 		/// Occurs when a property value changes.
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
-
-
-		internal event PropertyChangedEventHandler PropertyChangedInternal;
 
 
 		/// <summary>
@@ -148,66 +156,6 @@ namespace DotNetEx.Reactive
 					m_canExecuteSubscription = null;
 				}
 			}
-		}
-
-
-		public RxCommand Delegete( Action<RxCommandContext> method )
-		{
-			return this.Delegete( method, Observable.Return<Boolean>( true ) );
-		}
-
-
-		public RxCommand Delegete( IObservable<Boolean> canExecute )
-		{
-			return this.Delegete( x => { }, canExecute );
-		}
-
-
-		public RxCommand Delegete( Action<RxCommandContext> method, IObservable<Boolean> canExecute )
-		{
-			Check.NotNull( method, "method" );
-			Check.NotNull( canExecute, "canExecute" );
-
-			canExecute = Observable.CombineLatest( new[] { this.Observe( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
-
-			return new RxCommand( x =>
-			{
-				RxCommandContext context = new RxCommandContext( x );
-
-				method( context );
-
-				if ( !context.Cancel )
-				{
-					this.Execute( context.Parameter );
-				}
-			}, canExecute );
-		}
-
-
-		public RxCommand Delegete( Func<RxCommandContext, Task> method )
-		{
-			return this.Delegete( method, Observable.Return<Boolean>( true ) );
-		}
-
-
-		public RxCommand Delegete( Func<RxCommandContext, Task> method, IObservable<Boolean> canExecute )
-		{
-			Check.NotNull( method, "method" );
-			Check.NotNull( canExecute, "canExecute" );
-
-			canExecute = Observable.CombineLatest( new[] { this.Observe( x => !x.IsDisabled ), canExecute }, x => x.All( v => v ) );
-
-			return new RxCommand( async x =>
-			{
-				RxCommandContext context = new RxCommandContext( x );
-
-				await method( context );
-
-				if ( !context.Cancel )
-				{
-					this.Execute( context.Parameter );
-				}
-			}, canExecute );
 		}
 
 
@@ -294,13 +242,13 @@ namespace DotNetEx.Reactive
 
 				try
 				{
-					if ( m_handler != null )
+					if ( m_isAsync )
 					{
-						m_handler( parameter );
+						await ( (Func<Object, Task>)m_handler )( parameter );
 					}
 					else
 					{
-						await m_asyncHandler( parameter );
+						( (Action<Object>)m_handler )( parameter );
 					}
 				}
 				catch ( Exception ex )
@@ -365,8 +313,7 @@ namespace DotNetEx.Reactive
 
 		private void RaisePropertyChanged( String propertyName )
 		{
-			var e	= this.PropertyChanged;
-			var ei	= this.PropertyChangedInternal;
+			var e = this.PropertyChanged;
 
 			if ( e != null )
 			{
@@ -378,11 +325,6 @@ namespace DotNetEx.Reactive
 				{
 					e( this, new PropertyChangedEventArgs( propertyName ) );
 				}
-			}
-
-			if ( ei != null )
-			{
-				ei( this, new PropertyChangedEventArgs( propertyName ) );
 			}
 		}
 
@@ -405,12 +347,12 @@ namespace DotNetEx.Reactive
 		}
 
 
-		private Int32 m_disabled = 0;
 		private readonly Object m_lock = new Object();
+		private readonly Object m_handler;
+		private readonly Boolean m_isAsync;
+		private Int32 m_disabled = 0;
 		private Boolean m_canExecuteLatest;
 		private IDisposable m_canExecuteSubscription;
-		private readonly Func<Object, Task>	m_asyncHandler;
-		private readonly Action<Object> m_handler;
 		private SynchronizationContext m_dispatcher;
 		private Boolean m_executing = false;
 	}

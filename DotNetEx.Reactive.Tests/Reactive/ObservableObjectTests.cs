@@ -27,29 +27,6 @@ namespace DotNetEx.Reactive
 
 
 		[TestMethod]
-		public void Changes_To_Children_During_Initialize_Must_Not_Change_IsChanged_Property()
-		{
-			TestObservableObject obj = new TestObservableObject();
-
-			obj.BeginInit();
-			obj.Name = "Joe";
-			obj.Nickname = "Apple";
-			obj.Child = new TestObservableObject();
-			obj.Children.Add( new TestObservableObject() );
-
-			Assert.AreEqual( true, obj.Child.IsInitializing );
-			Assert.AreEqual( true, obj.Children.IsInitializing );
-			Assert.AreEqual( true, obj.Children[ 0 ].IsInitializing );
-
-			obj.EndInit();
-
-			Assert.AreEqual( false, obj.Child.IsInitializing );
-			Assert.AreEqual( false, obj.Children.IsInitializing );
-			Assert.AreEqual( false, obj.Children[ 0 ].IsInitializing );
-		}
-
-
-		[TestMethod]
 		public void Deserialization_Must_Not_Change_IsChanged_Property()
 		{
 			TestObservableObject obj = new TestObservableObject();
@@ -94,6 +71,10 @@ namespace DotNetEx.Reactive
 
 			obj.Name = "Joe";
 			obj.Nickname = "Apple";
+			obj.Child = new TestObservableObject( 1 );
+
+			obj.Child = null;
+			obj.Children = null;
 
 			Assert.AreEqual( true, obj.IsChanged );
 
