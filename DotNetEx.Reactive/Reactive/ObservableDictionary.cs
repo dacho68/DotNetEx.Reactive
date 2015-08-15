@@ -1,38 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DotNetEx.Reactive
 {
-	public class ObservableDictionary<T, TKey, TValue> : ObservableList<TValue>, IObservableDictionary<TKey, TValue>
-		where T : ObservableDictionaryKey<TValue, TKey>, new()
+	/// <summary>
+	/// Represents an observable collection of keys and values.
+	/// </summary>
+	/// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
+	/// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
+	public class ObservableDictionary<TKey, TValue> : ObservableList<ObservableKeyValuePair<TKey, TValue>>
 	{
-		public ObservableDictionary()
+		/// <summary>
+		/// Creates a new instance of an observable dictionary using EqualityComparer&lt;TKey&gt;.Default
+		/// as default key comparer.
+		/// </summary>
+		public ObservableDictionary() :
+			this( EqualityComparer<TKey>.Default )
 		{
-			m_key = new T();
-			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
 		}
 
 
-		public ObservableDictionary( Int32 capacity ) :
-			base( capacity )
+		/// <summary>
+		/// Creates a new instance of an observable dictionary.
+		/// </summary>
+		/// <param name="comparer">The equality comparer to be used when comparing keys.</param>
+		public ObservableDictionary( IEqualityComparer<TKey> comparer )
 		{
-			m_key = new T();
-			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
+			Check.NotNull( comparer, "comparer" );
+
+			m_keys = new Dictionary<TKey, Int32>( comparer );
 		}
 
 
-		public ObservableDictionary( IEnumerable<TValue> items ) :
-			base( items )
+		/// <summary>
+		/// Creates a new instance of an observable dictionary and copies the values using the provided 
+		/// key function to extract associated keys.
+		/// </summary>
+		public ObservableDictionary( Func<TValue, TKey> key, IEnumerable<TValue> values ) :
+			this( EqualityComparer<TKey>.Default )
 		{
-			Check.NotNull( items, "items" );
+			Check.NotNull( key, "key" );
+			Check.NotNull( values, "values" );
 
-			m_key = new T();
-			m_indexes = new Dictionary<TKey, Int32>( m_key.Comparer );
-
-			for ( Int32 i = 0; i < this.Count; ++i )
+			foreach ( var value in values )
 			{
-				m_indexes.Add( m_key.GetKey( this[ i ] ), i );
+				this.Add( key( value ), value );
 			}
 		}
 
@@ -42,7 +54,7 @@ namespace DotNetEx.Reactive
 		/// </summary>
 		public Boolean ContainsKey( TKey key )
 		{
-			return m_indexes.ContainsKey( key );
+			return m_keys.ContainsKey( key );
 		}
 
 
@@ -50,9 +62,9 @@ namespace DotNetEx.Reactive
 		/// Removes the value located at the specified key.
 		/// </summary>
 		/// <returns>True if the key existed, False when it didn't</returns>
-		public Boolean RemoveKey( TKey key )
+		public Boolean Remove( TKey key )
 		{
-			Int32 index = this.IndexOfKey( key );
+			Int32 index = this.IndexOf( key );
 
 			if ( index > -1 )
 			{
@@ -65,11 +77,14 @@ namespace DotNetEx.Reactive
 		}
 
 
-		public Int32 IndexOfKey( TKey key )
+		/// <summary>
+		/// Returns the index of the provided key inside the current collection or -1 if not found.
+		/// </summary>
+		public Int32 IndexOf( TKey key )
 		{
 			Int32 index;
 
-			if ( !m_indexes.TryGetValue( key, out index ) )
+			if ( !m_keys.TryGetValue( key, out index ) )
 			{
 				index = -1;
 			}
@@ -78,10 +93,13 @@ namespace DotNetEx.Reactive
 		}
 
 
+		/// <summary>
+		/// Gets the value associated with the specified key. Returns True if the key was found, False otherwise.
+		/// </summary>
 		public Boolean TryGetValue( TKey key, out TValue value )
 		{
-			Int32 index = this.IndexOfKey( key );
-			value = index > -1 ? this[ index ] : default( TValue );
+			Int32 index = this.IndexOf( key );
+			value = index > -1 ? this[ index ].Value : default( TValue );
 
 			return index > -1;
 		}
@@ -93,83 +111,77 @@ namespace DotNetEx.Reactive
 		/// <exception cref="System.Collections.Generic.KeyNotFoundException">the key doesn't exist</exception>
 		public TValue GetValue( TKey key )
 		{
-			Int32 index = this.IndexOfKey( key );
+			Int32 index = this.IndexOf( key );
 
 			if ( index < 0 )
 			{
-				throw new KeyNotFoundException();
+				throw new KeyNotFoundException( String.Format( "The key {0} was not found.", key ) );
 			}
 
-			return this[ index ];
+			return this[ index ].Value;
 		}
 
 
-		public void AddOrUpdate( TValue value )
+		/// <summary>
+		/// Adds the specified key and value to the dictionary.
+		/// </summary>
+		/// <exception cref="System.ArgumentException">An element with the same key already exists in the collection.</exception>
+		public void Add( TKey key, TValue value )
 		{
-			TKey key = m_key.GetKey( value );
-			var index = this.IndexOfKey( key );
+			this.Add( new ObservableKeyValuePair<TKey, TValue>( key, value ) );
+		}
+
+
+		/// <summary>
+		/// Adds the value in case the key doesn't already exist in the dictionary
+		/// or updates it otherwise.
+		/// </summary>
+		public void AddOrUpdate( TKey key, TValue value )
+		{
+			var index = this.IndexOf( key );
 
 			if ( index > -1 )
 			{
-				this[ index ] = value;
+				this[ index ].Value = value;
 			}
 			else
 			{
-				this.Add( value );
+				this.Add( key, value );
 			}
 		}
 
 
-		protected override void OnItemAdded( TValue item, Int32 index )
+		protected override void OnInsert( ObservableKeyValuePair<TKey, TValue> item, Int32 index )
 		{
-			m_indexes[ m_key.GetKey( item ) ] = index;
-
-			base.OnItemAdded( item, index );
-		}
-
-
-		protected override void OnItemRemoved( TValue item )
-		{
-			m_indexes.Remove( m_key.GetKey( item ) );
-
-			base.OnItemRemoved( item );
-		}
-
-
-		protected override void OnItemMoved( TValue item, Int32 newIndex )
-		{
-			m_indexes[ m_key.GetKey( item ) ] = newIndex;
-
-			base.OnItemMoved( item, newIndex );
-		}
-
-
-		private readonly Dictionary<TKey, Int32> m_indexes;
-		private readonly ObservableDictionaryKey<TValue, TKey> m_key;
-	}
-
-
-	public sealed class ObservableDictionary<TKey, TValue> : ObservableDictionary<ObservableDictionary<TKey, TValue>.Key, TKey, TValue>
-		where TValue : IObservableDictionaryKey<TKey>
-	{
-		public sealed class Key : ObservableDictionaryKey<TValue, TKey>
-		{
-			public override TKey GetKey( TValue item )
+			try
 			{
-				return item.GetKey();
+				m_keys.Add( item.Key, index );
 			}
+			catch ( ArgumentException )
+			{
+				throw new ArgumentException( String.Format( "An element with the key '{0}' already exists in the collection.", item.Key ) );
+			}
+
+			base.OnInsert( item, index );
 		}
 
 
-		public ObservableDictionary() :
-			base()
+		protected override void OnRemove( ObservableKeyValuePair<TKey, TValue> item )
 		{
+			m_keys.Remove( item.Key );
+
+			base.OnRemove( item );
 		}
 
 
-		public ObservableDictionary( IEnumerable<TValue> items ) :
-			base( items )
+		protected override void OnMove( ObservableKeyValuePair<TKey, TValue> item, Int32 newIndex )
 		{
+			m_keys[ item.Key ] = newIndex;
+
+			base.OnMove( item, newIndex );
 		}
+
+
+		private readonly Dictionary<TKey, Int32> m_keys; // Mapping between a key and the position of that key in the current collection
 	}
 }

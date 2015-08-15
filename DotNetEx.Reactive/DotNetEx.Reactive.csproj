@@ -34,6 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\DotNetEx.Reactive.xml</DocumentationFile>
+    <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -57,12 +58,12 @@
     <Compile Include="Annotations\OnPropertyChangingAttribute.cs" />
     <Compile Include="Annotations\OnPropertyChangedAttribute.cs" />
     <Compile Include="Internal\ReflectionTraits.cs" />
-    <Compile Include="Reactive\IObservableDictionaryKey.cs" />
-    <Compile Include="Reactive\IObservableDictionary.cs" />
-    <Compile Include="Reactive\IObservableList.cs" />
-    <Compile Include="Reactive\IObservableObject.cs" />
-    <Compile Include="Reactive\ObservableDictionaryKey.cs" />
     <Compile Include="Internal\ObservableExpression.cs" />
+    <Compile Include="Reactive\IObservableObject.cs" />
+    <Compile Include="Reactive\IReadOnlyObservableList.cs" />
+    <Compile Include="Reactive\ObservableKeyValuePair.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Reactive\ReferencesAttribute.cs" />
     <Compile Include="Cache\AppCache.cs" />
     <Compile Include="Cache\AppCacheItem.cs" />

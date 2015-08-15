@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reactive.Subjects;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using DotNetEx.Internal;
@@ -11,7 +9,7 @@ using DotNetEx.Internal;
 namespace DotNetEx.Reactive
 {
 	[Serializable]
-	public abstract class ObservableObject : IObservableObject
+	public abstract class ObservableObject : IObservableObject, IChangeTracking, ISupportInitialize
 	{
 		protected ObservableObject()
 		{
@@ -190,7 +188,7 @@ namespace DotNetEx.Reactive
 		{
 			if ( !this.IsChanged && !this.IsInitializing )
 			{
-				if ( e.PropertyName == "IsChanged" )
+				if ( ( (IChangeTracking)sender ).IsChanged )
 				{
 					this.IsChanged = true;
 				}
@@ -219,11 +217,11 @@ namespace DotNetEx.Reactive
 				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 				{
 					m_acceptChanges += ( (IChangeTracking)item ).AcceptChanges;
-				}
 
-				if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
-				{
-					( (INotifyPropertyChanged)item ).PropertyChanged += OnItemPropertyChanged;
+					if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
+					{
+						( (INotifyPropertyChanged)item ).PropertyChanged += OnItemPropertyChanged;
+					}
 				}
 			}
 		}
@@ -236,11 +234,11 @@ namespace DotNetEx.Reactive
 				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 				{
 					m_acceptChanges -= ( (IChangeTracking)item ).AcceptChanges;
-				}
 
-				if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
-				{
-					( (INotifyPropertyChanged)item ).PropertyChanged -= OnItemPropertyChanged;
+					if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
+					{
+						( (INotifyPropertyChanged)item ).PropertyChanged -= OnItemPropertyChanged;
+					}
 				}
 			}
 		}

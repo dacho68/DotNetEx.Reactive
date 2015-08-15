@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace DotNetEx.Reactive
 {
-	public interface IObservableObject : INotifyPropertyChanged, IChangeTracking, ISupportInitialize
+	public interface IObservableObject : INotifyPropertyChanged
 	{
 		IObservable<PropertyChangedEventArgs> PropertyChanges { get; }
 	}

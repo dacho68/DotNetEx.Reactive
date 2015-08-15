@@ -72,9 +72,7 @@ namespace DotNetEx.Reactive
 			obj.Name = "Joe";
 			obj.Nickname = "Apple";
 			obj.Child = new TestObservableObject( 1 );
-
-			obj.Child = null;
-			obj.Children = null;
+			obj.Child.Name = "Ivan";
 
 			Assert.AreEqual( true, obj.IsChanged );
 

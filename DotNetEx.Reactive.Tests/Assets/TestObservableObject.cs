@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DotNetEx.Reactive
 {
 	[DataContract]
-	public sealed class TestObservableObject : ObservableObject, IObservableDictionaryKey<Int32>
+	public sealed class TestObservableObject : ObservableObject
 	{
 		public TestObservableObject( Int32 id = 0 )
 		{
@@ -73,12 +73,6 @@ namespace DotNetEx.Reactive
 			{
 				this.SetValue( ref m_children, value );
 			}
-		}
-
-
-		Int32 IObservableDictionaryKey<Int32>.GetKey()
-		{
-			return this.Id;
 		}
 
 

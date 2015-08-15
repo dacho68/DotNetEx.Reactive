@@ -13,7 +13,11 @@ namespace DotNetEx.Reactive
 	/// Implementation of a dynamic data collection based on ObservableObject that uses List&lt;T&gt; as internal container, 
 	/// implementing INotifyCollectionChanged to notify listeners when items get added, removed or the whole list is refreshed.
 	/// </summary>
-	public class ObservableList<T> : ObservableObject, IObservableList<T>
+	public class ObservableList<T> : 
+		ObservableObject, INotifyCollectionChanged, 
+		IList, IList<T>, IReadOnlyList<T>, IReadOnlyObservableList<T>,
+		ICollection, ICollection<T>, IReadOnlyCollection<T>, 
+		IEnumerable, IEnumerable<T>
 	{
 		/// <summary>
 		/// Initializes a new empty instance of ObservableList.
@@ -42,10 +46,14 @@ namespace DotNetEx.Reactive
 
 			m_items = new List<T>( collection );
 
+			this.BeginInit();
+
 			for ( Int32 i = 0; i < m_items.Count; ++i )
 			{
-				this.SetupItem( m_items[ i ], i, remove: false, constructor: true );
+				this.OnInsert( m_items[ i ], i );
 			}
+
+			this.EndInit();
 		}
 
 
@@ -176,10 +184,12 @@ namespace DotNetEx.Reactive
 
 				if ( !EqualityComparer<T>.Default.Equals( originalItem, value ) )
 				{
-					this.SetupItem( originalItem, -1, true );
-					this.SetupItem( value, index, false );
+					this.OnRemove( originalItem );
+					this.OnInsert( value, index );
 
 					m_items[ index ] = value;
+
+					this.RaiseChanged();
 
 					if ( index == 0 )
 					{
@@ -201,9 +211,11 @@ namespace DotNetEx.Reactive
 		{
 			Int32 itemIndex = m_items.Count;
 
+			this.OnInsert( item, itemIndex );
+
 			m_items.Add( item );
 
-			this.SetupItem( item, itemIndex, false );
+			this.RaiseChanged();
 			this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 			this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
 			this.RaisePropertyChanged( INDEXER_PROPERTY_NAME );
@@ -215,9 +227,10 @@ namespace DotNetEx.Reactive
 		{
 			if ( m_items.Count > 0 )
 			{
-				m_items.ForEach( x => this.SetupItem( x, -1, true ) );
+				m_items.ForEach( x => this.OnRemove( x ) );
 				m_items.Clear();
 
+				this.RaiseChanged();
 				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
@@ -235,21 +248,30 @@ namespace DotNetEx.Reactive
 
 			if ( m_items.Count > 0 )
 			{
-				m_items.ForEach( x => this.SetupItem( x, -1, true ) );
+				m_items.ForEach( x => this.OnRemove( x ) );
 				m_items.Clear();
 
 				cleared = true;
 			}
 
-			m_items.AddRange( items );
+			ICollection<T> collection = items as ICollection<T>;
+			Int32 itemIndex = -1;
 
-			for ( Int32 i = 0; i < m_items.Count; ++i )
+			if ( collection != null )
 			{
-				this.SetupItem( m_items[ i ], i, false );
+				m_items.Capacity = collection.Count;
+			}
+
+			foreach ( var item in items )
+			{
+				this.OnInsert( item, ++itemIndex );
+
+				m_items.Add( item );
 			}
 
 			if ( cleared || m_items.Count > 0 )
 			{
+				this.RaiseChanged();
 				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( COUNT_PROPERTY_NAME );
@@ -291,14 +313,16 @@ namespace DotNetEx.Reactive
 
 		public void Insert( Int32 index, T item )
 		{
-			m_items.Insert( index, item );
+			this.OnInsert( item, index );
 
-			this.SetupItem( item, index, false );
+			m_items.Insert( index, item );
 
 			for ( Int32 i = index + 1; i < m_items.Count; ++i )
 			{
-				this.OnItemMoved( m_items[ i ], i );
+				this.OnMove( m_items[ i ], i );
 			}
+
+			this.RaiseChanged();
 
 			if ( index == 0 )
 			{
@@ -334,14 +358,16 @@ namespace DotNetEx.Reactive
 		{
 			T item = m_items[ index ];
 
-			m_items.RemoveAt( index );
+			this.OnRemove( item );
 
-			this.SetupItem( item, -1, true );
+			m_items.RemoveAt( index );
 
 			for ( Int32 i = index; i < m_items.Count; ++i )
 			{
-				this.OnItemMoved( m_items[ i ], i );
+				this.OnMove( m_items[ i ], i );
 			}
+
+			this.RaiseChanged();
 
 			if ( index == 0 )
 			{
@@ -381,16 +407,18 @@ namespace DotNetEx.Reactive
 				{
 					for ( Int32 i = oldIndex; i <= newIndex; ++i )
 					{
-						this.OnItemMoved( m_items[ i ], i );
+						this.OnMove( m_items[ i ], i );
 					}
 				}
 				else
 				{
 					for ( Int32 i = newIndex; i <= oldIndex; ++i )
 					{
-						this.OnItemMoved( m_items[ i ], i );
+						this.OnMove( m_items[ i ], i );
 					}
 				}
+
+				this.RaiseChanged();
 
 				if ( oldIndex == 0 || newIndex == 0 )
 				{
@@ -416,18 +444,21 @@ namespace DotNetEx.Reactive
 
 		public void Sort( Comparison<T> comparison )
 		{
+			Check.NotNull( comparison, "comparison" );
+
 			if ( m_items.Count > 0 )
 			{
 				m_items.Sort( comparison );
 
+				for ( Int32 i = 0; i < m_items.Count; ++i )
+				{
+					this.OnMove( m_items[ i ], i );
+				}
+
+				this.RaiseChanged();
 				this.RaisePropertyChanged( FIRST_ITEM_PROPERTY_NAME );
 				this.RaisePropertyChanged( LAST_ITEM_PROPERTY_NAME );
 				this.RaiseCollectionReset();
-
-				for ( Int32 i = 0; i < m_items.Count; ++i )
-				{
-					this.OnItemMoved( m_items[ i ], i );
-				}
 			}
 		}
 
@@ -435,27 +466,17 @@ namespace DotNetEx.Reactive
 		/// <summary>
 		/// This method removes all items which matches the predicate.
 		/// </summary>
-		public Int32 RemoveAll( Predicate<T> match )
+		public Int32 RemoveAll( Predicate<T> predicate )
 		{
-			Check.NotNull( match, "match" );
+			Check.NotNull( predicate, "predicate" );
 
 			Int32 removeCount = 0;
 
 			for ( Int32 i = this.Count - 1; i >= 0; --i )
 			{
-				if ( match( m_items[ i ] ) )
+				if ( predicate( m_items[ i ] ) )
 				{
 					this.RemoveAt( i );
-
-					// If the removed item wasn't at the end, all elements after it
-					// must be considered moved by -1.
-					if ( i < this.Count - 1 )
-					{
-						for ( Int32 movedIndex = i; movedIndex < this.Count - 1; ++movedIndex )
-						{
-							this.OnItemMoved( m_items[ movedIndex ], movedIndex );
-						}
-					}
 
 					++removeCount;
 				}
@@ -471,45 +492,26 @@ namespace DotNetEx.Reactive
 			{
 				this.IsChanged = false;
 
-				if ( ReflectionTraits.Assignable<IChangeTracking, T>.Value && m_items.Count > 0 )
+				if ( m_items.Count > 0 && ReflectionTraits.Assignable<IChangeTracking, T>.Value )
 				{
-					foreach ( var item in m_items.Cast<IChangeTracking>() )
+					foreach ( var item in m_items )
 					{
-						item.AcceptChanges();
+						if ( !Object.ReferenceEquals( item, null ) )
+						{
+							( (IChangeTracking)item ).AcceptChanges();
+						}
 					}
 				}
 			}
 		}
 
 
-		protected virtual void OnItemAdded( T item, Int32 index )
-		{
-			if ( !this.IsInitializing && !this.IsChanged )
-			{
-				this.IsChanged = true;
-			}
-		}
-
-
-		protected virtual void OnItemRemoved( T item )
-		{
-			if ( !this.IsInitializing && !this.IsChanged )
-			{
-				this.IsChanged = true;
-			}
-		}
-
-
-		protected virtual void OnItemMoved( T item, Int32 newIndex )
-		{
-			if ( !this.IsInitializing && !this.IsChanged )
-			{
-				this.IsChanged = true;
-			}
-		}
-
-
-		private void SetupItem( T item, Int32 index, Boolean remove, Boolean constructor = false )
+		/// <summary>
+		/// Called before inserting an item in the collection.
+		/// </summary>
+		/// <param name="item">The item being inserted.</param>
+		/// <param name="index">The index where the item will be inserted.</param>
+		protected virtual void OnInsert( T item, Int32 index )
 		{
 			if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 			{
@@ -517,27 +519,45 @@ namespace DotNetEx.Reactive
 
 				if ( observable != null )
 				{
-					if ( remove )
-					{
-						observable.PropertyChanged -= this.OnItemPropertyChanged;
-					}
-					else
-					{
-						observable.PropertyChanged += this.OnItemPropertyChanged;
-					}
+					observable.PropertyChanged += this.OnItemPropertyChanged;
 				}
 			}
+		}
 
-			if ( !constructor )
+
+		/// <summary>
+		/// Called before removing an item from the collection.
+		/// </summary>
+		/// <param name="item">The item being removed.</param>
+		protected virtual void OnRemove( T item )
+		{
+			if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 			{
-				if ( remove )
+				INotifyPropertyChanged observable = (INotifyPropertyChanged)item;
+
+				if ( observable != null )
 				{
-					this.OnItemRemoved( item );
+					observable.PropertyChanged -= this.OnItemPropertyChanged;
 				}
-				else
-				{
-					this.OnItemAdded( item, index );
-				}
+			}
+		}
+
+
+		/// <summary>
+		/// Called before moving an item in the collection.
+		/// </summary>
+		/// <param name="item">The item being moved.</param>
+		/// <param name="newIndex">The index where the item will be moved to.</param>
+		protected virtual void OnMove( T item, Int32 newIndex )
+		{
+		}
+
+
+		private void RaiseChanged()
+		{
+			if ( !this.IsInitializing )
+			{
+				this.IsChanged = true;
 			}
 		}
 

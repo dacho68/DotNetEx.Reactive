@@ -11,7 +11,7 @@ namespace DotNetEx.Reactive
 		/// <param name="arg">The argument.</param>
 		/// <param name="argName">Name of the argument.</param>
 		/// <exception cref="System.ArgumentNullException">When the provided argument is null.</exception>
-		public static void NotNull<T>( T arg, String argName ) where T : class
+		public static void NotNull( Object arg, String argName )
 		{
 			if ( Object.ReferenceEquals( arg, null ) )
 			{

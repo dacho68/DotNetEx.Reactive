@@ -16,8 +16,8 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
 
 			Assert.AreEqual( true, list.ContainsKey( 1 ) );
 			Assert.AreEqual( false, list.ContainsKey( 3 ) );
@@ -30,18 +30,18 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
 
-			Assert.AreEqual( -1, list.IndexOfKey( 3 ) );
-			Assert.AreEqual( 0, list.IndexOfKey( 1 ) );
-			Assert.AreEqual( 1, list.IndexOfKey( 2 ) );
+			Assert.AreEqual( -1, list.IndexOf( 3 ) );
+			Assert.AreEqual( 0, list.IndexOf( 1 ) );
+			Assert.AreEqual( 1, list.IndexOf( 2 ) );
 
-			list.Insert( 0, new TestObservableObject( 3 ) );
+			list.Insert( 0, new ObservableKeyValuePair<Int32, TestObservableObject>( 3, new TestObservableObject( 3 ) ) );
 
-			Assert.AreEqual( 0, list.IndexOfKey( 3 ) );
-			Assert.AreEqual( 1, list.IndexOfKey( 1 ) );
-			Assert.AreEqual( 2, list.IndexOfKey( 2 ) );
+			Assert.AreEqual( 0, list.IndexOf( 3 ) );
+			Assert.AreEqual( 1, list.IndexOf( 1 ) );
+			Assert.AreEqual( 2, list.IndexOf( 2 ) );
 		}
 
 
@@ -51,14 +51,14 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
 
-			list.Insert( 0, new TestObservableObject( 3 ) );
+			list.Insert( 0, new ObservableKeyValuePair<int,TestObservableObject>( 3, new TestObservableObject( 3 ) ) );
 
-			Assert.AreEqual( 0, list.IndexOfKey( 3 ) );
-			Assert.AreEqual( 1, list.IndexOfKey( 1 ) );
-			Assert.AreEqual( 2, list.IndexOfKey( 2 ) );
+			Assert.AreEqual( 0, list.IndexOf( 3 ) );
+			Assert.AreEqual( 1, list.IndexOf( 1 ) );
+			Assert.AreEqual( 2, list.IndexOf( 2 ) );
 		}
 
 
@@ -68,15 +68,15 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
-			list.Add( new TestObservableObject( 3 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
+			list.Add( 3, new TestObservableObject( 3 ) );
 
 			list.MoveItem( 2, 0 );
 
-			Assert.AreEqual( 0, list.IndexOfKey( 3 ) );
-			Assert.AreEqual( 1, list.IndexOfKey( 1 ) );
-			Assert.AreEqual( 2, list.IndexOfKey( 2 ) );
+			Assert.AreEqual( 0, list.IndexOf( 3 ) );
+			Assert.AreEqual( 1, list.IndexOf( 1 ) );
+			Assert.AreEqual( 2, list.IndexOf( 2 ) );
 		}
 
 
@@ -86,15 +86,15 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
-			list.Add( new TestObservableObject( 3 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
+			list.Add( 3, new TestObservableObject( 3 ) );
 
-			Assert.AreEqual( true, list.RemoveKey( 2 ) );
+			Assert.AreEqual( true, list.Remove( 2 ) );
 
-			Assert.AreEqual( 0, list.IndexOfKey( 1 ) );
-			Assert.AreEqual( -1, list.IndexOfKey( 2 ) );
-			Assert.AreEqual( 1, list.IndexOfKey( 3 ) );
+			Assert.AreEqual( 0, list.IndexOf( 1 ) );
+			Assert.AreEqual( -1, list.IndexOf( 2 ) );
+			Assert.AreEqual( 1, list.IndexOf( 3 ) );
 		}
 
 
@@ -103,8 +103,8 @@ namespace DotNetEx.Reactive
 		{
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
 
 			Assert.AreEqual( true, list.IsChanged );
 
@@ -112,7 +112,7 @@ namespace DotNetEx.Reactive
 
 			Assert.AreEqual( false, list.IsChanged );
 
-			list[ 0 ].Nickname = "Tester";
+			list[ 0 ].Value.Nickname = "Tester";
 
 			Assert.AreEqual( true, list[ 0 ].IsChanged );
 			Assert.AreEqual( true, list.IsChanged );
@@ -130,15 +130,26 @@ namespace DotNetEx.Reactive
 			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
 
 			list.BeginInit();
-			list.Add( new TestObservableObject( 1 ) );
-			list.Add( new TestObservableObject( 2 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 2, new TestObservableObject( 2 ) );
 			list.EndInit();
 
 			Assert.AreEqual( false, list.IsChanged );
 
-			list.AddOrUpdate( new TestObservableObject( 1 ) );
+			list.AddOrUpdate( 1, new TestObservableObject( 1 ) );
 
 			Assert.AreEqual( true, list.IsChanged );
+		}
+
+
+		[TestMethod]
+		[ExpectedException( typeof( ArgumentException ) )]
+		public void ObservableDictionary_Must_Not_Allow_Duplicate_Keys()
+		{
+			ObservableDictionary<Int32, TestObservableObject> list = new ObservableDictionary<Int32, TestObservableObject>();
+
+			list.Add( 1, new TestObservableObject( 1 ) );
+			list.Add( 1, new TestObservableObject( 1 ) );
 		}
 	}
 }
