@@ -7,7 +7,8 @@ using System.Reactive.Subjects;
 
 namespace DotNetEx.Reactive
 {
-	internal sealed class ObservableCollectionListener<TCollection, TItem> 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable" )]
+	internal sealed class ObservableCollectionListener<TCollection, TItem>
 		where TCollection : INotifyCollectionChanged, IEnumerable<TItem>
 	{
 		public ObservableCollectionListener( TCollection collection )

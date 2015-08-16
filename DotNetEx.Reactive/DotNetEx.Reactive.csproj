@@ -7,7 +7,7 @@
     <ProjectGuid>{5178217A-2470-4529-A4D4-06D8EAA096C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DotNetEx</RootNamespace>
+    <RootNamespace>DotNetEx.Reactive</RootNamespace>
     <AssemblyName>DotNetEx.Reactive</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -55,8 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Annotations\OnPropertyChangingAttribute.cs" />
-    <Compile Include="Annotations\OnPropertyChangedAttribute.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Internal\ReflectionTraits.cs" />
     <Compile Include="Internal\ObservableExpression.cs" />
     <Compile Include="Reactive\IObservableObject.cs" />
@@ -76,7 +75,6 @@
     <Compile Include="Internal\Diagnostics.cs" />
     <Compile Include="Internal\ObservableCollectionListener.cs" />
     <Compile Include="Internal\ReferenceEqualityComparer.cs" />
-    <Compile Include="Internal\StringExtensions.cs" />
     <Compile Include="Reactive\ObservableDictionary.cs" />
     <Compile Include="Reactive\ObservableList.cs" />
     <Compile Include="Reactive\ObservableObject.cs" />

@@ -5,7 +5,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Subjects;
-using DotNetEx.Internal;
 
 namespace DotNetEx.Reactive
 {
@@ -13,6 +12,7 @@ namespace DotNetEx.Reactive
 	/// Implementation of a dynamic data collection based on ObservableObject that uses List&lt;T&gt; as internal container, 
 	/// implementing INotifyCollectionChanged to notify listeners when items get added, removed or the whole list is refreshed.
 	/// </summary>
+	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable" )]
 	public class ObservableList<T> : 
 		ObservableObject, INotifyCollectionChanged, 
 		IList, IList<T>, IReadOnlyList<T>, IReadOnlyObservableList<T>,
@@ -46,14 +46,16 @@ namespace DotNetEx.Reactive
 
 			m_items = new List<T>( collection );
 
-			this.BeginInit();
-
-			for ( Int32 i = 0; i < m_items.Count; ++i )
+			if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 			{
-				this.OnInsert( m_items[ i ], i );
+				foreach ( INotifyPropertyChanged observable in collection )
+				{
+					if ( observable != null )
+					{
+						observable.PropertyChanged += this.OnItemPropertyChanged;
+					}
+				}
 			}
-
-			this.EndInit();
 		}
 
 

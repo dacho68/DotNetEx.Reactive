@@ -67,8 +67,8 @@
   <ItemGroup>
     <Compile Include="Assets\TestObservableObject.cs" />
     <Compile Include="Extensions\ObservableCollectionExtensionsTests.cs" />
-    <Compile Include="Reactive\ObservableDictionary.cs" />
-    <Compile Include="Reactive\ObservableList.cs" />
+    <Compile Include="Reactive\ObservableDictionaryTests.cs" />
+    <Compile Include="Reactive\ObservableListTests.cs" />
     <Compile Include="Reactive\ObservableObjectTests.cs" />
     <Compile Include="Assets\TestCounter.cs" />
     <Compile Include="Assets\TestItem.cs" />

@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using DotNetEx.Internal;
 
 namespace DotNetEx.Reactive
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable" )]
 	[Serializable]
 	public abstract class ObservableObject : IObservableObject, IChangeTracking, ISupportInitialize
 	{

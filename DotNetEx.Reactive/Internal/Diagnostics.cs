@@ -36,27 +36,6 @@ namespace DotNetEx.Reactive
 
 
 		/// <summary>
-		/// Checks the provided argument is not the default value. Performs null reference check for reference types
-		/// and empty value for value types.
-		/// </summary>
-		/// <param name="arg">The argument.</param>
-		/// <param name="argName">Name of the argument.</param>
-		/// <exception cref="System.ArgumentException">When the argument is null for reference types and when the argument is default( T ) for value types.</exception>
-		public static void NotDefault<T>( T arg, String argName )
-		{
-			if ( Object.Equals( arg, default( T ) ) )
-			{
-				if ( typeof( T ).IsValueType )
-				{
-					throw new ArgumentException( argName + " cannot be default or emtpy." );
-				}
-
-				throw new ArgumentException( argName + " cannot be null." );
-			}
-		}
-
-
-		/// <summary>
 		/// Checks the argument is in the specified range.
 		/// </summary>
 		/// <param name="arg">The argument.</param>
@@ -76,33 +55,6 @@ namespace DotNetEx.Reactive
 			if ( comparer.Compare( arg, maxValue ) == 1 )
 			{
 				throw new ArgumentOutOfRangeException( argName + " cannot be greater than " + maxValue );
-			}
-		}
-
-
-		/// <summary>
-		/// Checks the provided arguments for equality.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <exception cref="System.ArgumentException">When the two arguments are not equal.</exception>
-		public static void Equal<T>( T arg1, T arg2, String errorMessage ) where T : struct, IComparable<T>
-		{
-			if ( arg1.CompareTo( arg2 ) != 0 )
-			{
-				throw new ArgumentException( errorMessage );
-			}
-		}
-
-
-		/// <summary>
-		/// Checks the provided arguments point to the same object reference.
-		/// </summary>
-		/// <exception cref="System.ArgumentException">When the two arguments are not reference to the same object.</exception>
-		public static void ReferenceEqual<T>( T arg1, T arg2, String errorMessage ) where T : class
-		{
-			if ( !Object.ReferenceEquals( arg1, arg2 ) )
-			{
-				throw new ArgumentException( errorMessage );
 			}
 		}
 

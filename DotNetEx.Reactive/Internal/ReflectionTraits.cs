@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DotNetEx.Internal
+namespace DotNetEx.Reactive
 {
 	internal static class ReflectionTraits
 	{

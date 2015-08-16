@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using DotNetEx.Internal;
 
 namespace DotNetEx.Reactive
 {
@@ -328,7 +327,10 @@ namespace DotNetEx.Reactive
 		{
 			Check.NotNull( value, "value" );
 
-			return value.ToString( StringOptions.LettersAndNumbers );
+			return new String( Array.FindAll<Char>( value.ToCharArray(), x =>
+			{
+				return Char.IsLetter( x ) || Char.IsNumber( x );
+			} ) );
 		}
 
 
