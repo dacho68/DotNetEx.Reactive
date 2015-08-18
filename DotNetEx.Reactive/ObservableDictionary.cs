@@ -42,10 +42,14 @@ namespace DotNetEx.Reactive
 			Check.NotNull( key, "key" );
 			Check.NotNull( values, "values" );
 
+			this.BeginInit();
+
 			foreach ( var value in values )
 			{
 				this.Add( key( value ), value );
 			}
+
+			this.EndInit();
 		}
 
 
