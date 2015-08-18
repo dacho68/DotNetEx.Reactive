@@ -48,7 +48,7 @@ namespace DotNetEx.Reactive
 
 			if ( ReflectionTraits.Assignable<INotifyPropertyChanged, T>.Value )
 			{
-				foreach ( INotifyPropertyChanged observable in collection )
+				foreach ( INotifyPropertyChanged observable in m_items )
 				{
 					if ( observable != null )
 					{

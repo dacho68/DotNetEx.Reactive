@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace DotNetEx.Reactive
 {
 	[TestClass]
-	public sealed partial class ObservableDictionaryTests
+	public sealed class ObservableDictionaryTests
 	{
 		[TestMethod]
 		[Description( "ContainsKey must return true for existing element and false for non existing." )]
@@ -159,6 +159,24 @@ namespace DotNetEx.Reactive
 			var dictionary = new ObservableDictionary<Int32, String>( x => x.GetHashCode(), Enumerable.Range( 0, 10 ).Select( x => x.ToString() ) );
 
 			Assert.AreEqual( false, dictionary.IsChanged );
+		}
+
+
+		[TestMethod]
+		public void Item_Change_Must_Raise_Is_Changed_Of_The_Dictionary()
+		{
+			var dictionary = new ObservableDictionary<Int32, TestObservableObject>( x => x.Id, Enumerable.Range( 0, 5 ).Select( x => new TestObservableObject( x ) ) );
+
+			dictionary.BeginInit();
+			dictionary.Add( 8, new TestObservableObject() );
+			dictionary.Add( 9, new TestObservableObject() );
+			dictionary.EndInit();
+
+			Assert.AreEqual( false, dictionary.IsChanged );
+
+			dictionary.GetValue( 1 ).Name = "Joe";
+
+			Assert.AreEqual( true, dictionary.IsChanged );
 		}
 	}
 }
